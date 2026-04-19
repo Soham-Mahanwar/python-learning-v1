@@ -1,0 +1,10 @@
+Date: 17/2/2026
+Time: 19:40
+Phone Number: +917028471170
+Message: OPTIONS TERMINAL TESTIndex: NIFTYWhatsApp alerts are working.Time: 19:39:47Ranges: Net Delta +/-0.10 | Warn at +/-0.07 | Leg Delta +/-0.20
+--------------------
+Date: 17/2/2026
+Time: 20:2
+Phone Number: +917028471170
+Message: OPTIONS TERMINAL TESTIndex: NIFTYWhatsApp alerts are working.Time: 20:02:18Ranges: Net Delta +/-0.10 | Warn at +/-0.07 | Leg Delta +/-0.20
+--------------------

@@ -1,0 +1,2541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Options Terminal</title>
+<style>
+:root {
+  --bg:#f5f6f8; --white:#fff; --surf:#fff; --card:#fff;
+  --bdr:#e2e6ea; --bdr2:#ced4da;
+  --primary:#ff6b00; --primary-l:#fff3ec; --primary-d:#e55a00;
+  --tp:#1a2332; --ts:#4a5568; --tm:#8796a5; --tl:#b8c4ce;
+  --grn:#00a651; --grn-l:#e8f8ee; --grn-d:#007a3a;
+  --red:#d32f2f; --red-l:#fff5f5; --red-d:#b71c1c;
+  --blue:#1565c0; --blue-l:#e8f0fe;
+  --gld:#f57f17; --gld-l:#fff8e1;
+  --pur:#7c3aed; --pur-l:#f5f3ff;
+  --sh1:0 1px 3px rgba(0,0,0,.06); --sh2:0 4px 12px rgba(0,0,0,.08);
+  --mono: ui-monospace,'Cascadia Code','SF Mono','Fira Code',Consolas,monospace;
+  --sans: ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --r:6px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--tp);font-family:var(--sans);min-height:100vh;font-size:13px;}
+input,select,button{font-family:var(--sans);}
+a{text-decoration:none;color:inherit;}
+
+.topbar{position:sticky;top:0;z-index:300;background:var(--white);border-bottom:2px solid var(--primary);box-shadow:var(--sh1);display:flex;align-items:center;padding:0 20px;height:52px;gap:12px;}
+.back-link{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ts);padding:5px 10px;border:1px solid var(--bdr);border-radius:5px;transition:all .15s;cursor:pointer;}
+.back-link:hover{border-color:var(--primary);color:var(--primary);}
+.tb-title{font-size:16px;font-weight:800;color:var(--tp);letter-spacing:-.3px;}
+.tb-title span{color:var(--primary);}
+.tb-spot{font-size:18px;font-weight:700;font-family:var(--mono);color:var(--tp);}
+.spot-chg{font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;}
+.spot-chg.up{background:var(--grn-l);color:var(--grn);}
+.spot-chg.dn{background:var(--red-l);color:var(--red);}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.mkt-pill{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.07em;padding:4px 10px;border-radius:16px;}
+.mkt-pill.open{background:var(--grn-l);color:var(--grn);border:1px solid rgba(0,166,81,.2);}
+.mkt-pill.closed{background:var(--gld-l);color:var(--gld);border:1px solid rgba(245,127,23,.2);}
+.mdot{width:6px;height:6px;border-radius:50%;}
+.mdot.g{background:var(--grn);animation:blink 1.4s infinite;}
+.mdot.y{background:var(--gld);}
+.mdot.r{background:var(--red);animation:blink .7s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(211,47,47,.5)}70%{box-shadow:0 0 0 8px rgba(211,47,47,0)}}
+@keyframes slide-in{from{transform:translateY(-8px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* ── Live Greek Dashboard Cards ── */
+.live-greek-card{background:var(--white);border:1.5px solid var(--bdr);border-radius:10px;padding:12px 14px;position:relative;transition:border-color .2s,background .2s;}
+.live-greek-card.safe{border-color:rgba(0,166,81,.3);background:rgba(0,166,81,.03);}
+.live-greek-card.breach{border-color:var(--red);background:#fff5f5;animation:pulse-red 1.5s infinite;}
+.lgc-label{font-size:9px;font-weight:800;letter-spacing:.08em;color:var(--tm);text-transform:uppercase;margin-bottom:4px;}
+.lgc-value{font-size:20px;font-weight:800;font-family:var(--mono);color:var(--tp);margin-bottom:4px;transition:color .2s;}
+.lgc-value.safe{color:var(--grn);}
+.lgc-value.breach{color:var(--red);}
+.lgc-range{font-size:9px;color:var(--tm);margin-bottom:6px;font-family:var(--mono);}
+.lgc-bar-wrap{margin-bottom:6px;}
+.lgc-bar-track{height:4px;background:var(--bg);border-radius:2px;position:relative;overflow:visible;}
+.lgc-bar-fill{height:4px;border-radius:2px;position:absolute;transition:width .4s,left .4s,background .3s;min-width:4px;}
+.lgc-status{font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;display:inline-block;}
+.lgc-status.ok{background:rgba(0,166,81,.12);color:var(--grn);}
+.lgc-status.breach{background:rgba(211,47,47,.12);color:var(--red);}
+
+/* ── Alert Banners ── */
+.alert-banner{animation:slide-in .25s ease;border-radius:8px;padding:12px 16px;margin-bottom:8px;border:1.5px solid;display:flex;gap:12px;align-items:flex-start;}
+.alert-banner.active{background:#fff0f0;border-color:rgba(211,47,47,.4);}
+.alert-banner.resolved{background:#f0fff4;border-color:rgba(0,166,81,.3);opacity:.7;}
+.ab-icon{font-size:22px;flex-shrink:0;line-height:1;}
+.ab-body{flex:1;}
+.ab-title{font-size:12px;font-weight:800;margin-bottom:3px;}
+.ab-title.active{color:var(--red);}
+.ab-title.resolved{color:var(--grn);}
+.ab-msg{font-size:11px;color:var(--ts);line-height:1.5;margin-bottom:4px;}
+.ab-meta{font-size:10px;font-family:var(--mono);color:var(--tm);}
+
+/* ── Alert history log ── */
+.ahl-row{display:flex;gap:8px;align-items:flex-start;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.04);}
+.ahl-ts{color:var(--tm);min-width:70px;flex-shrink:0;}
+.ahl-greek{font-weight:800;min-width:52px;flex-shrink:0;}
+.ahl-greek.breach{color:var(--red);}
+.ahl-greek.ok{color:var(--grn);}
+.ahl-text{color:var(--ts);line-height:1.5;}
+
+.step-bar{background:var(--white);border-bottom:1px solid var(--bdr);padding:0 20px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none;}
+.step-bar::-webkit-scrollbar{display:none;}
+.sb-item{display:flex;align-items:center;gap:0;flex-shrink:0;}
+.sb-btn{display:flex;align-items:center;gap:8px;padding:12px 16px;border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;color:var(--tm);font-size:12px;font-weight:600;transition:all .15s;white-space:nowrap;}
+.sb-btn.active{color:var(--primary);border-bottom-color:var(--primary);}
+.sb-btn.done{color:var(--grn);}
+.sb-btn.locked{color:var(--tl);cursor:not-allowed;}
+.sb-num{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;background:var(--bg);border:1px solid var(--bdr);}
+.sb-btn.active .sb-num{background:var(--primary);border-color:var(--primary);color:#fff;}
+.sb-btn.done .sb-num{background:var(--grn);border-color:var(--grn);color:#fff;}
+.sb-sep{color:var(--tl);font-size:10px;padding:0 2px;}
+
+.main-layout{display:grid;grid-template-columns:1fr 360px;min-height:calc(100vh - 105px);}
+.main-content{padding:16px 20px;border-right:1px solid var(--bdr);}
+.sidebar{padding:14px 16px;background:var(--white);display:flex;flex-direction:column;gap:12px;}
+@media(max-width:1100px){.main-layout{grid-template-columns:1fr;}.sidebar{border-top:1px solid var(--bdr);}}
+
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.sec-title{font-size:12px;font-weight:800;color:var(--tp);letter-spacing:.02em;display:flex;align-items:center;gap:6px;}
+.sec-badge{font-size:9px;font-weight:700;letter-spacing:.07em;padding:2px 7px;border-radius:4px;}
+.sec-badge.orange{background:var(--primary-l);color:var(--primary);}
+.sec-badge.green{background:var(--grn-l);color:var(--grn);}
+.sec-badge.red{background:var(--red-l);color:var(--red);}
+.sec-badge.blue{background:var(--blue-l);color:var(--blue);}
+
+.epills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.epill{padding:4px 10px;border-radius:16px;font-size:11px;font-weight:600;border:1px solid var(--bdr);background:var(--bg);color:var(--tm);cursor:pointer;transition:all .12s;}
+.epill.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.epill:hover:not(.active){border-color:var(--primary);color:var(--primary);}
+
+.gt-wrap{overflow-x:auto;}
+#greeksBody td{padding:7px 12px;font-family:'DM Mono',monospace;font-size:12.5px;border-bottom:1px solid #f0f2f5;white-space:nowrap;vertical-align:middle;}
+#greeksBody td.ce{background:#f8fbff;text-align:right;color:#1a2332;}
+#greeksBody td.pe{background:#fff8f8;text-align:left;color:#1a2332;}
+#greeksBody td.sc{text-align:center;background:#f8f9fa;font-weight:800;font-size:13px;color:#1a2332;border-left:2px solid #c5d8f8;border-right:2px solid #f5c0c0;min-width:110px;position:relative;}
+#greeksBody tr:hover td.ce{background:#f5f8ff!important;}
+#greeksBody tr:hover td.pe{background:#fff5f5!important;}
+#greeksBody tr:hover td.sc{background:#fffbe6!important;}
+#greeksBody tr.atm-row td{border-top:2px solid #ffb3b3!important;border-bottom:2px solid #ffb3b3!important;}
+#greeksBody tr.atm-row td.sc{color:var(--primary);font-weight:900;border-top:2px solid var(--red)!important;border-bottom:2px solid var(--red)!important;}
+.val-pos{color:#00a651;font-weight:600;}
+.val-neg{color:#d32f2f;font-weight:600;}
+.val-neu{color:#4a5568;}
+.val-dim{color:#8796a5;}
+.d-eligible{color:#00a651!important;font-weight:700;background:rgba(0,166,81,.07);border-radius:3px;padding:1px 5px;}
+.atm-badge{font-size:8px;font-weight:800;letter-spacing:.05em;background:#d32f2f;color:#fff;border-radius:3px;padding:1px 5px;margin-left:4px;vertical-align:middle;}
+.bs-btn{font-size:9px;font-weight:800;padding:2px 8px;border-radius:4px;border:none;cursor:pointer;letter-spacing:.04em;transition:all .12px;line-height:1.4;}
+.bs-btn.b{background:#00a651;color:#fff;}
+.bs-btn.s{background:#d32f2f;color:#fff;}
+.bs-btn.b:hover{background:#007a3a;}
+.bs-btn.s:hover{background:#b71c1c;}
+.refresh-info{font-size:10px;color:var(--tm);display:flex;align-items:center;gap:6px;}
+.spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--bdr);border-top-color:var(--primary);border-radius:50%;animation:spin .55s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── VEGA FLOW BOX ── */
+.vega-flow-box{background:var(--pur-l);border:1px solid rgba(124,58,237,.25);border-radius:8px;padding:12px 14px;margin-bottom:14px;}
+.vfb-title{font-size:10px;font-weight:800;color:var(--pur);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.vfb-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:center;}
+.vfb-col{display:flex;flex-direction:column;gap:6px;}
+.vfb-arrow-col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;padding:0 10px;}
+.vfb-arrow{font-size:20px;color:var(--pur);line-height:1;}
+.vfb-card{background:var(--white);border:1px solid rgba(124,58,237,.2);border-radius:6px;padding:9px 11px;}
+.vfb-card.source{border-left:3px solid var(--blue);}
+.vfb-card.target{border-left:3px solid var(--pur);}
+.vfb-card.target.found{border-left:3px solid var(--grn);background:#f0faf5;}
+.vfc-label{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-bottom:3px;}
+.vfc-strike{font-size:15px;font-weight:800;font-family:var(--mono);color:var(--tp);}
+.vfc-vega{font-size:13px;font-weight:700;font-family:var(--mono);margin-bottom:1px;}
+.vfc-vega.pos{color:var(--grn);}
+.vfc-vega.neg{color:var(--red);}
+.vfc-meta{font-size:9px;color:var(--tm);}
+.vfc-diff{font-size:9px;font-weight:700;margin-top:3px;}
+.vfc-diff.exact{color:var(--grn);}
+.vfc-diff.close{color:var(--gld);}
+.vfc-diff.far{color:var(--red);}
+
+.panel{background:var(--white);border:1px solid var(--bdr);border-radius:8px;padding:14px;box-shadow:var(--sh1);}
+.panel-title{font-size:11px;font-weight:800;color:var(--tp);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.panel-title .pnum{width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.panel-title .pnum.done{background:var(--grn);}
+.panel-title .pnum.locked{background:var(--tl);}
+
+.leg-card{padding:10px 12px;border-radius:6px;border:1px solid var(--bdr);background:var(--bg);position:relative;margin-bottom:8px;transition:border-color .2s;}
+.leg-card.filled{border-color:var(--grn);background:#f0faf5;}
+.leg-card.failed{border-color:var(--red);background:var(--red-l);}
+.lc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.lc-num{font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--tm);}
+.lc-action{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.lc-action.sell{background:var(--red-l);color:var(--red);border:1px solid rgba(211,47,47,.2);}
+.lc-action.buy{background:var(--grn-l);color:var(--grn);border:1px solid rgba(0,166,81,.2);}
+.lc-row{display:flex;gap:6px;margin-bottom:6px;align-items:center;}
+.lc-lbl{font-size:9px;color:var(--tm);min-width:34px;}
+.lc-sel,.lc-inp{flex:1;padding:5px 7px;border:1px solid var(--bdr);border-radius:4px;font-size:11px;background:var(--white);color:var(--tp);outline:none;}
+.lc-sel:focus,.lc-inp:focus{border-color:var(--primary);}
+.lc-info{font-size:10px;color:var(--tm);margin-top:5px;padding:5px 8px;background:var(--white);border-radius:4px;border:1px solid var(--bdr);}
+.lc-info.ok{color:var(--grn);background:var(--grn-l);border-color:rgba(0,166,81,.2);}
+.lc-info.bad{color:var(--red);background:var(--red-l);border-color:rgba(211,47,47,.2);}
+.remove-leg{position:absolute;top:8px;right:8px;width:16px;height:16px;border:none;background:rgba(211,47,47,.1);color:var(--red);border-radius:3px;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;}
+.remove-leg:hover{background:var(--red);color:#fff;}
+
+.greek-check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.gc-item{padding:8px 10px;border-radius:6px;border:1px solid var(--bdr);background:var(--bg);}
+.gc-label{font-size:9px;font-weight:700;color:var(--tm);margin-bottom:3px;letter-spacing:.06em;text-transform:uppercase;}
+.gc-value{font-size:15px;font-weight:700;font-family:var(--mono);margin-bottom:2px;}
+.gc-range{font-size:9px;color:var(--tm);}
+.gc-status{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;display:inline-block;margin-top:4px;}
+.gc-status.ok{background:var(--grn-l);color:var(--grn);}
+.gc-status.fail{background:var(--red-l);color:var(--red);}
+
+.net-delta-box{background:var(--bg);border:1px solid var(--bdr);border-radius:6px;padding:10px 12px;margin-bottom:10px;}
+.nd-label{font-size:9px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
+.nd-value{font-size:24px;font-weight:800;font-family:var(--mono);margin-bottom:6px;}
+.nd-track{height:8px;border-radius:4px;background:var(--bdr);position:relative;overflow:hidden;margin-bottom:3px;}
+.nd-fill{position:absolute;top:0;height:100%;border-radius:4px;transition:all .3s;}
+.nd-fill.ok{background:var(--grn);}
+.nd-fill.warn{background:var(--gld);}
+.nd-fill.bad{background:var(--red);}
+.nd-labels{display:flex;justify-content:space-between;font-size:8px;color:var(--tm);}
+.nd-verdict{font-size:11px;font-weight:700;padding:6px 10px;border-radius:5px;text-align:center;margin-top:6px;}
+.nd-verdict.ok{background:var(--grn-l);color:var(--grn);border:1px solid rgba(0,166,81,.2);}
+.nd-verdict.bad{background:var(--red-l);color:var(--red);border:1px solid rgba(211,47,47,.2);}
+.nd-verdict.idle{background:var(--gld-l);color:var(--gld);border:1px solid rgba(245,127,23,.2);}
+
+.pnl-box{padding:10px 12px;border-radius:6px;border:1px solid var(--bdr);background:var(--bg);margin-bottom:8px;}
+.pnl-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.pnl-key{font-size:10px;color:var(--tm);}
+.pnl-val{font-size:13px;font-weight:700;font-family:var(--mono);}
+.pnl-val.pos{color:var(--grn);}
+.pnl-val.neg{color:var(--red);}
+.pnl-bar{height:6px;border-radius:3px;background:var(--bdr);overflow:hidden;margin:4px 0;}
+.pnl-fill{height:100%;border-radius:3px;transition:width .4s;}
+.pnl-fill.profit{background:var(--grn);}
+.pnl-fill.loss{background:var(--red);}
+
+.action-btn{width:100%;padding:10px 16px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.01em;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;}
+.action-btn.primary{background:var(--primary);color:#fff;}
+.action-btn.primary:hover{background:var(--primary-d);transform:translateY(-1px);}
+.action-btn.primary:disabled{background:var(--tl);cursor:not-allowed;transform:none;}
+.action-btn.success{background:var(--grn);color:#fff;}
+.action-btn.success:hover{background:var(--grn-d);}
+.action-btn.danger{background:var(--red);color:#fff;}
+.action-btn.danger:hover{background:var(--red-d);}
+.action-btn.outline{background:transparent;border:1px solid var(--bdr);color:var(--ts);}
+.action-btn.outline:hover{border-color:var(--primary);color:var(--primary);}
+.action-btn.sm{padding:7px 12px;font-size:11px;}
+
+.pos-cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pos-card{padding:12px;border-radius:6px;border:1px solid var(--bdr);background:var(--white);box-shadow:var(--sh1);}
+.pos-card.safe{border-left:3px solid var(--grn);}
+.pos-card.risk{border-left:3px solid var(--red);animation:borderblink 1.2s infinite;}
+@keyframes borderblink{0%,100%{border-left-color:var(--red)}50%{border-left-color:rgba(211,47,47,.2)}}
+.pc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.pc-sym{font-size:11px;font-weight:800;color:var(--tp);}
+.pc-row{display:flex;justify-content:space-between;margin-bottom:3px;}
+.pc-key{font-size:9px;color:var(--tm);}
+.pc-val{font-size:11px;font-weight:600;font-family:var(--mono);}
+.pc-val.ok{color:var(--grn);}
+.pc-val.bad{color:var(--red);}
+.pc-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;}
+.pc-badge.CE{background:var(--blue-l);color:var(--blue);}
+.pc-badge.PE{background:var(--red-l);color:var(--red);}
+.pc-badge.BUY{background:var(--grn-l);color:var(--grn);}
+.pc-badge.SELL{background:var(--red-l);color:var(--red);}
+
+/* ── EXIT CONFIRM OVERLAY ── */
+.exit-confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9998;display:flex;align-items:center;justify-content:center;}
+.exit-confirm-box{background:var(--white);border:2px solid var(--red);border-radius:12px;padding:24px 28px;box-shadow:0 8px 32px rgba(0,0,0,.2);max-width:340px;width:90%;text-align:center;}
+.exit-confirm-box h3{font-size:16px;font-weight:800;color:var(--red);margin-bottom:8px;}
+.exit-confirm-box p{font-size:12px;color:var(--ts);margin-bottom:18px;line-height:1.5;}
+.exit-confirm-btns{display:flex;gap:10px;}
+.exit-confirm-btns button{flex:1;padding:10px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;border:none;}
+.exit-yes{background:var(--red);color:#fff;}
+.exit-yes:hover{background:var(--red-d);}
+.exit-no{background:var(--bg);color:var(--ts);border:1px solid var(--bdr)!important;}
+
+.alert-box{padding:12px 14px;border-radius:7px;margin-bottom:10px;display:none;}
+.alert-box.danger{background:var(--red-l);border:1px solid rgba(211,47,47,.3);}
+.alert-box.warning{background:var(--gld-l);border:1px solid rgba(245,127,23,.3);}
+.alert-box.success{background:var(--grn-l);border:1px solid rgba(0,166,81,.3);}
+.alert-title{font-weight:800;font-size:13px;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.alert-title.danger{color:var(--red);}
+.alert-title.warning{color:var(--gld);}
+.alert-title.success{color:var(--grn);}
+.alert-body{font-size:11px;color:var(--ts);line-height:1.5;}
+
+.mon-greek-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bdr);}
+.mon-greek-row:last-child{border-bottom:none;}
+.mgr-label{font-size:10px;font-weight:700;color:var(--ts);}
+.mgr-value{font-size:12px;font-weight:700;font-family:var(--mono);}
+.mgr-range{font-size:9px;color:var(--tm);}
+.mgr-status{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;}
+.mgr-status.ok{background:var(--grn-l);color:var(--grn);}
+.mgr-status.fail{background:var(--red-l);color:var(--red);}
+
+.log-box{max-height:200px;overflow-y:auto;background:#f8f9fa;border:1px solid var(--bdr);border-radius:5px;padding:8px;font-family:var(--mono);font-size:10px;line-height:1.7;}
+.log-entry{padding:1px 0;}
+.log-ts{color:var(--tm);}
+.log-ok{color:var(--grn);}
+.log-warn{color:var(--gld);}
+.log-err{color:var(--red);}
+.log-info{color:var(--blue);}
+
+.order-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.oleg{padding:10px;border-radius:5px;border:1px solid var(--bdr);background:var(--bg);}
+.oleg.s0{border-left:3px solid var(--blue);}
+.oleg.s1{border-left:3px solid var(--pur);}
+.oleg.s2{border-left:3px solid var(--grn);}
+.oleg.s3{border-left:3px solid var(--gld);}
+.oleg-lbl{font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.oleg-sym{font-size:11px;font-weight:700;color:var(--tp);margin-bottom:2px;}
+.oleg-meta{font-size:10px;color:var(--tm);}
+
+.toast{position:fixed;bottom:20px;right:20px;z-index:9999;padding:10px 16px;border-radius:7px;font-size:12px;font-weight:600;transform:translateY(60px);opacity:0;transition:all .25s;max-width:320px;pointer-events:none;box-shadow:var(--sh2);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{background:#e8f8ee;border:1px solid rgba(0,166,81,.3);color:var(--grn);}
+.toast.err{background:var(--red-l);border:1px solid rgba(211,47,47,.3);color:var(--red);}
+.toast.info{background:var(--blue-l);border:1px solid rgba(21,101,192,.3);color:var(--blue);}
+.toast.warn{background:var(--gld-l);border:1px solid rgba(245,127,23,.3);color:var(--gld);}
+
+.shim{background:linear-gradient(90deg,#f0f2f5 25%,#e8eaee 50%,#f0f2f5 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:2px;display:block;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+.mon-timer{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--tm);}
+.mon-timer b{color:var(--primary);font-size:14px;font-family:var(--mono);}
+.mon-toggle{display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:5px;border:1px solid var(--bdr);background:transparent;font-size:11px;font-weight:700;color:var(--tm);cursor:pointer;transition:all .15s;}
+.mon-toggle.on{border-color:var(--grn);color:var(--grn);background:var(--grn-l);}
+.mon-toggle.danger{border-color:var(--red);color:var(--red);background:var(--red-l);animation:borderblink 1s infinite;}
+
+.ctrl-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.ctrl-lbl{font-size:11px;color:var(--tm);}
+.ctrl-inp{padding:6px 9px;border:1px solid var(--bdr);border-radius:4px;font-size:12px;font-weight:600;text-align:center;color:var(--tp);outline:none;}
+.ctrl-inp:focus{border-color:var(--primary);}
+.ctrl-inp.w60{width:60px;}
+.ctrl-inp.w80{width:80px;}
+
+.hist-item{padding:10px;border:1px solid var(--bdr);border-radius:6px;margin-bottom:6px;}
+.hist-item.win{border-left:3px solid var(--grn);}
+.hist-item.loss{border-left:3px solid var(--red);}
+.hist-row{display:flex;justify-content:space-between;align-items:center;}
+.hist-pnl{font-size:14px;font-weight:700;font-family:var(--mono);}
+.hist-pnl.pos{color:var(--grn);}
+.hist-pnl.neg{color:var(--red);}
+.hist-meta{font-size:10px;color:var(--tm);}
+
+.config-view{padding:16px 20px;max-width:700px;}
+.config-section{background:var(--white);border:1px solid var(--bdr);border-radius:8px;padding:16px;margin-bottom:12px;}
+.cfg-title{font-size:12px;font-weight:800;color:var(--tp);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.cfg-field{}
+.cfg-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-bottom:4px;}
+.cfg-inp{width:100%;padding:7px 10px;border:1px solid var(--bdr);border-radius:5px;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--tp);outline:none;}
+.cfg-inp:focus{border-color:var(--primary);}
+.cfg-note{font-size:9px;color:var(--tm);margin-top:3px;line-height:1.4;}
+.cfg-save-btn{padding:9px 20px;background:var(--primary);color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;}
+.cfg-save-btn:hover{background:var(--primary-d);}
+.range-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--primary-l);color:var(--primary);border:1px solid rgba(255,107,0,.2);margin-left:8px;}
+.divider{border:none;border-top:1px solid var(--bdr);margin:10px 0;}
+.no-data{text-align:center;padding:30px;color:var(--tm);font-size:12px;}
+.badge-pill{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;}
+.badge-pill.grn{background:var(--grn-l);color:var(--grn);}
+.badge-pill.red{background:var(--red-l);color:var(--red);}
+.badge-pill.blue{background:var(--blue-l);color:var(--blue);}
+
+/* Vega source highlight */
+.vega-source-tag{display:inline-flex;align-items:center;gap:3px;font-size:8px;font-weight:800;padding:1px 6px;border-radius:8px;margin-left:4px;}
+.vega-source-tag.l1{background:rgba(21,101,192,.12);color:var(--blue);border:1px solid rgba(21,101,192,.2);}
+.vega-source-tag.l2{background:rgba(211,47,47,.1);color:var(--red);border:1px solid rgba(211,47,47,.2);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="back-link">← Back</a>
+  <div class="tb-title" id="pageTitle">NIFTY <span>TERMINAL</span></div>
+  <div class="tb-spot" id="spotPrice">—</div>
+  <div class="spot-chg up" id="spotChg">—</div>
+  <div class="tb-right">
+    <div class="mkt-pill closed" id="mktPill"><div class="mdot y" id="mdot"></div><span id="mktTxt">CLOSED</span></div>
+    <div class="refresh-info"><span class="spinner" id="spinner" style="display:none"></span><span id="lastUpdate" style="font-size:10px;color:var(--tm)">Loading...</span></div>
+  </div>
+</div>
+
+<div class="step-bar">
+  <div class="sb-item"><button class="sb-btn active" id="sbtn-greeks" onclick="goStep('greeks')"><span class="sb-num" id="snum-greeks">2</span>📊 Fetch Live Greeks</button><span class="sb-sep">›</span></div>
+  <div class="sb-item"><button class="sb-btn locked" id="sbtn-trade" onclick="goStep('trade')"><span class="sb-num" id="snum-trade">3</span>⚡ Prepare Trade</button><span class="sb-sep">›</span></div>
+  <div class="sb-item"><button class="sb-btn locked" id="sbtn-check" onclick="goStep('check')"><span class="sb-num" id="snum-check">4</span>✅ Check Greeks</button><span class="sb-sep">›</span></div>
+  <div class="sb-item"><button class="sb-btn locked" id="sbtn-place" onclick="goStep('place')"><span class="sb-num" id="snum-place">6</span>🚀 Place Order</button><span class="sb-sep">›</span></div>
+  <div class="sb-item"><button class="sb-btn locked" id="sbtn-monitor" onclick="goStep('monitor')"><span class="sb-num" id="snum-monitor">7</span>🔍 Monitor Trade</button><span class="sb-sep">›</span></div>
+  <div class="sb-item"><button class="sb-btn" id="sbtn-config" onclick="goStep('config')"><span class="sb-num" style="background:var(--bg);border:1px solid var(--bdr);color:var(--tm)">⚙</span>Config</button><span class="sb-sep">›</span></div>
+  <div class="sb-item"><button class="sb-btn" id="sbtn-logs" onclick="goStep('logs')"><span class="sb-num" style="background:var(--bg);border:1px solid var(--bdr);color:var(--tm)">📋</span>Logs</button></div>
+</div>
+
+<div class="main-layout">
+<div class="main-content">
+
+  <!-- GREEKS VIEW -->
+  <div id="view-greeks">
+    <div class="sec-hd">
+      <div class="sec-title">📊 Live Option Chain — Greeks <span class="sec-badge orange">STEP 2</span></div>
+      <div class="refresh-info"><span id="lastUpdateGreeks" style="font-size:10px;color:var(--tm)">Loading...</span><span style="font-size:10px;color:var(--tm)">· auto ⟳ 8s</span></div>
+    </div>
+    <div style="background:#fff8e1;border:1px solid rgba(245,127,23,.2);border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gld);">
+      💡 Strikes with <strong style="color:#00a651">green delta</strong> eligible range = <strong id="chainEligHint">Δ ±0.25</strong> (target Δ+0.20/−0.20 ± 0.05). <strong>Hover a row</strong> to reveal B/S buttons.
+    </div>
+    <div class="epills" id="epills"></div>
+    <div class="gt-wrap" style="border:1px solid #e2e6ea;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);max-height:520px;overflow-y:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead style="position:sticky;top:0;z-index:10;">
+          <tr>
+            <th colspan="6" style="position:sticky;top:0;background:#f0f5ff;color:#1565c0;text-align:center;font-size:12px;font-weight:800;padding:9px 14px;letter-spacing:.06em;border-bottom:1px solid #dde7f8;border-right:2px solid #c5d8f8">CALL</th>
+            <th style="position:sticky;top:0;background:#fff;color:#8796a5;text-align:center;font-size:10px;font-weight:600;padding:9px 8px;letter-spacing:.08em;border-left:2px solid #c5d8f8;border-right:2px solid #f5c0c0;border-bottom:1px solid #e2e6ea;min-width:110px">Greeks ▾</th>
+            <th colspan="6" style="position:sticky;top:0;background:#fff5f5;color:#c62828;text-align:center;font-size:12px;font-weight:800;padding:9px 14px;letter-spacing:.06em;border-bottom:1px solid #f8d7d7;border-left:2px solid #f5c0c0">PUT</th>
+          </tr>
+          <tr style="background:#f8f9fa">
+            <th style="position:sticky;top:38px;text-align:right;color:#374151;font-size:10px;font-weight:700;padding:6px 12px;border-bottom:2px solid #e2e6ea;background:#f0f5ff;letter-spacing:.07em;text-transform:uppercase">Vega</th>
+            <th style="position:sticky;top:38px;text-align:right;color:#374151;font-size:10px;font-weight:700;padding:6px 12px;border-bottom:2px solid #e2e6ea;background:#f0f5ff;letter-spacing:.07em;text-transform:uppercase">Gamma</th>
+            <th style="position:sticky;top:38px;text-align:right;color:#374151;font-size:10px;font-weight:700;padding:6px 12px;border-bottom:2px solid #e2e6ea;background:#f0f5ff;letter-spacing:.07em;text-transform:uppercase">Theta</th>
+            <th style="position:sticky;top:38px;text-align:right;color:#374151;font-size:10px;font-weight:700;padding:6px 12px;border-bottom:2px solid #e2e6ea;background:#f0f5ff;letter-spacing:.07em;text-transform:uppercase">Delta</th>
+            <th style="position:sticky;top:38px;text-align:right;color:#374151;font-size:10px;font-weight:700;padding:6px 12px;border-bottom:2px solid #e2e6ea;background:#f0f5ff;letter-spacing:.07em;text-transform:uppercase">IV</th>
+            <th style="position:sticky;top:38px;text-align:right;color:#374151;font-size:10px;font-weight:700;padding:6px 12px;border-bottom:2px solid #e2e6ea;background:#f0f5ff;border-right:2px solid #c5d8f8;letter-spacing:.07em;text-transform:uppercase">LTP</th>
+            <th style="position:sticky;top:38px;text-align:center;color:#111827;font-size:11px;font-weight:800;padding:6px 8px;border-bottom:2px solid #e2e6ea;background:#f8f9fa;border-left:2px solid #c5d8f8;border-right:2px solid #f5c0c0;letter-spacing:.06em;text-transform:uppercase">Strike</th>
+            <th style="position:sticky;top:38px;text-align:left;color:#374151;font-size:10px;font-weight:700;padding:6px 12px;border-bottom:2px solid #e2e6ea;background:#fff0f0;border-left:2px solid #f5c0c0;letter-spacing:.07em;text-transform:uppercase">LTP</th>
+            <th style="position:sticky;top:38px;text-align:left;color:#374151;font-size:10px;font-weight:700;padding:6px 12px;border-bottom:2px solid #e2e6ea;background:#fff0f0;letter-spacing:.07em;text-transform:uppercase">IV</th>
+            <th style="position:sticky;top:38px;text-align:left;color:#374151;font-size:10px;font-weight:700;padding:6px 12px;border-bottom:2px solid #e2e6ea;background:#fff0f0;letter-spacing:.07em;text-transform:uppercase">Delta</th>
+            <th style="position:sticky;top:38px;text-align:left;color:#374151;font-size:10px;font-weight:700;padding:6px 12px;border-bottom:2px solid #e2e6ea;background:#fff0f0;letter-spacing:.07em;text-transform:uppercase">Theta</th>
+            <th style="position:sticky;top:38px;text-align:left;color:#374151;font-size:10px;font-weight:700;padding:6px 12px;border-bottom:2px solid #e2e6ea;background:#fff0f0;letter-spacing:.07em;text-transform:uppercase">Gamma</th>
+            <th style="position:sticky;top:38px;text-align:left;color:#374151;font-size:10px;font-weight:700;padding:6px 12px;border-bottom:2px solid #e2e6ea;background:#fff0f0;letter-spacing:.07em;text-transform:uppercase">Vega</th>
+          </tr>
+        </thead>
+        <tbody id="greeksBody">
+          <tr><td colspan="13" class="no-data"><span class="shim" style="width:120px;height:12px;display:inline-block"></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PREPARE TRADE VIEW -->
+  <div id="view-trade" style="display:none">
+    <div class="sec-hd">
+      <div class="sec-title">⚡ Prepare Trade — 4 Legs <span class="sec-badge orange">STEP 3</span></div>
+      <button class="action-btn outline sm" style="width:auto" onclick="autoFill()">✦ Auto-Fill from Greeks</button>
+    </div>
+
+    <div style="font-size:11px;color:var(--tm);margin-bottom:12px;padding:12px 14px;background:var(--white);border:1px solid var(--bdr);border-radius:5px;line-height:2.1">
+      <strong style="color:#1a2332;font-size:12px">4-Leg Strategy — Selection Logic</strong><br>
+
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-top:6px">
+        <span style="background:var(--blue-l);color:var(--blue);font-weight:800;font-size:9px;padding:2px 8px;border-radius:10px;white-space:nowrap;margin-top:2px">LEG 1</span>
+        <span>Current week <strong>CE SELL</strong> — find strike with delta <strong>≤ +<span id="descCeDelta">0.20</span> (closest below)</strong><br>
+        <span style="font-size:9px;color:var(--pur)">↳ Read that strike's vega → store as <strong>V1</strong> (e.g. V1 = +4.54)</span></span>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-top:4px">
+        <span style="background:var(--red-l);color:var(--red);font-weight:800;font-size:9px;padding:2px 8px;border-radius:10px;white-space:nowrap;margin-top:2px">LEG 2</span>
+        <span>Current week <strong>PE SELL</strong> — find strike with delta <strong>≥ <span id="descPeDelta">−0.20</span> (closest above)</strong><br>
+        <span style="font-size:9px;color:var(--pur)">↳ Read that strike's vega → store as <strong>V2</strong> (e.g. V2 = −4.50)</span></span>
+      </div>
+
+      <div style="border-top:1px dashed rgba(124,58,237,.25);margin:8px 0 4px;padding-top:4px;font-size:9px;font-weight:800;color:var(--pur);letter-spacing:.06em">⬇ VEGA FLOW: CURRENT WEEK → NEXT WEEK</div>
+
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <span style="background:var(--pur-l);color:var(--pur);font-weight:800;font-size:9px;padding:2px 8px;border-radius:10px;border:1px solid rgba(124,58,237,.25);white-space:nowrap;margin-top:2px">LEG 3</span>
+        <span>Next week <strong>CE BUY</strong> — find strike with vega <strong>closest to V1</strong><br>
+        <span id="descVegaTol" style="display:none">0.3</span><span id="descVegaTol2" style="display:none">0.3</span>
+        <span style="font-size:9px;color:var(--tm)">e.g. V1 = 4.54 → pick next-week CE strike whose vega is nearest to 4.54</span></span>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-top:4px">
+        <span style="background:var(--pur-l);color:var(--pur);font-weight:800;font-size:9px;padding:2px 8px;border-radius:10px;border:1px solid rgba(124,58,237,.25);white-space:nowrap;margin-top:2px">LEG 4</span>
+        <span>Next week <strong>PE BUY</strong> — find strike with vega <strong>closest to V2</strong><br>
+        <span style="font-size:9px;color:var(--tm)">e.g. V2 = −4.50 → pick next-week PE strike whose vega is nearest to 4.50</span></span>
+      </div>
+    </div>
+
+    <!-- ══ VEGA FLOW BOX ══ -->
+    <div class="vega-flow-box" id="vegaFlowBox" style="display:none">
+      <div class="vfb-title">⬡ Vega Flow — Current Week → Next Week Match</div>
+      <div class="vfb-grid">
+        <div class="vfb-col">
+          <div style="font-size:9px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Current Week (SELL) — Vega Source</div>
+          <div class="vfb-card source" id="vfbLeg1Card">
+            <div class="vfc-label">Leg 1 — CE SELL <span class="vega-source-tag l1">V1 source</span></div>
+            <div class="vfc-strike" id="vfbLeg1Strike">—</div>
+            <div class="vfc-vega pos" id="vfbLeg1Vega">—</div>
+            <div class="vfc-meta" id="vfbLeg1Meta">—</div>
+          </div>
+          <div class="vfb-card source" id="vfbLeg2Card">
+            <div class="vfc-label">Leg 2 — PE SELL <span class="vega-source-tag l2">V2 source</span></div>
+            <div class="vfc-strike" id="vfbLeg2Strike">—</div>
+            <div class="vfc-vega neg" id="vfbLeg2Vega">—</div>
+            <div class="vfc-meta" id="vfbLeg2Meta">—</div>
+          </div>
+        </div>
+        <div class="vfb-arrow-col">
+          <div style="font-size:9px;font-weight:700;color:var(--pur);text-align:center;margin-bottom:4px">Vega<br>Match</div>
+          <div style="text-align:center">
+            <div class="vfb-arrow">→</div>
+            <div style="font-size:8px;color:var(--blue);font-weight:700;margin-top:2px">V1 → L3</div>
+          </div>
+          <div style="text-align:center">
+            <div class="vfb-arrow">→</div>
+            <div style="font-size:8px;color:var(--red);font-weight:700;margin-top:2px">V2 → L4</div>
+          </div>
+        </div>
+        <div class="vfb-col">
+          <div style="font-size:9px;font-weight:800;color:var(--pur);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Next Week (BUY) — Vega Target</div>
+          <div class="vfb-card target" id="vfbLeg3Card">
+            <div class="vfc-label">Leg 3 — CE BUY <span class="vega-source-tag l1">matches V1</span></div>
+            <div class="vfc-strike" id="vfbLeg3Strike">—</div>
+            <div class="vfc-vega pos" id="vfbLeg3Vega">—</div>
+            <div class="vfc-diff" id="vfbLeg3Diff">searching...</div>
+          </div>
+          <div class="vfb-card target" id="vfbLeg4Card">
+            <div class="vfc-label">Leg 4 — PE BUY <span class="vega-source-tag l2">matches V2</span></div>
+            <div class="vfc-strike" id="vfbLeg4Strike">—</div>
+            <div class="vfc-vega neg" id="vfbLeg4Vega">—</div>
+            <div class="vfc-diff" id="vfbLeg4Diff">searching...</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px;padding:8px 10px;background:rgba(124,58,237,.05);border-radius:5px;font-size:9px;color:var(--pur);border:1px solid rgba(124,58,237,.12)">
+        <strong>Matching rule:</strong> Leg 3 CE BUY ← |next-week CE vega| ≈ |Leg 1 vega| · Leg 4 PE BUY ← |next-week PE vega| ≈ |Leg 2 vega| · Tolerance T = <span id="vfbTolLabel">0.3</span> · Next expiry: <strong id="vfbNextExpiry" style="color:var(--pur)">—</strong>
+      </div>
+    </div>
+
+    <div id="legCards"></div>
+    <button class="action-btn outline sm" style="width:auto;margin-bottom:12px" onclick="addLeg()">+ Add Leg</button>
+    <div style="display:flex;gap:8px">
+      <button class="action-btn primary" onclick="goStep('check')">✅ Proceed to Check Greeks →</button>
+    </div>
+  </div>
+
+  <!-- CHECK GREEKS VIEW -->
+  <div id="view-check" style="display:none">
+    <div class="sec-hd"><div class="sec-title">✅ Check Greeks — Pre-Trade Validation <span class="sec-badge orange">STEP 4</span></div></div>
+    <div style="background:var(--primary-l);border:1px solid rgba(255,107,0,.2);border-radius:6px;padding:10px 14px;margin-bottom:12px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:10px;font-weight:800;color:var(--primary)">PRE-TRADE ALLOWED RANGES:</span>
+      <span style="font-size:10px;color:var(--tp)">Δ <strong id="dispPreDelta">±0.07</strong></span>
+      <span style="font-size:10px;color:var(--tp)">θ <strong id="dispPreTheta">+5 to +500</strong></span>
+      <span style="font-size:10px;color:var(--tp)">ν <strong id="dispPreVega">-7 to +7</strong></span>
+      <span style="font-size:10px;color:var(--tp)">Γ <strong id="dispPreGamma">±0.004</strong></span>
+      <button onclick="goStep('config')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;border:1px solid var(--primary);background:transparent;color:var(--primary);cursor:pointer">Edit Config ⚙</button>
+    </div>
+    <div id="checkAlerts"></div>
+    <div class="greek-check-grid" id="greekCheckGrid"></div>
+    <div class="net-delta-box">
+      <div class="nd-label">Net Portfolio Delta (Σ)</div>
+      <div class="nd-value" id="ndValue">—</div>
+      <div class="nd-track"><div class="nd-fill ok" id="ndFill" style="width:0;left:50%;position:absolute"></div></div>
+      <div class="nd-labels"><span>-0.20</span><span>-0.07</span><span>0</span><span>+0.07</span><span>+0.20</span></div>
+      <div class="nd-verdict idle" id="ndVerdict">Fill legs to see validation</div>
+    </div>
+    <div id="greeksSummary" style="margin-bottom:12px;padding:10px 12px;background:var(--white);border:1px solid var(--bdr);border-radius:6px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+      <div><div style="font-size:9px;color:var(--tm);margin-bottom:2px">Σ GAMMA</div><div id="sumGamma" style="font-size:14px;font-weight:700;font-family:var(--mono)">—</div></div>
+      <div><div style="font-size:9px;color:var(--tm);margin-bottom:2px">Σ THETA</div><div id="sumTheta" style="font-size:14px;font-weight:700;font-family:var(--mono)">—</div></div>
+      <div><div style="font-size:9px;color:var(--tm);margin-bottom:2px">Σ VEGA</div><div id="sumVega" style="font-size:14px;font-weight:700;font-family:var(--mono)">—</div></div>
+      <div><div style="font-size:9px;color:var(--tm);margin-bottom:2px">Σ DELTA</div><div id="sumDelta" style="font-size:14px;font-weight:700;font-family:var(--mono)">—</div></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="action-btn outline" onclick="goStep('trade')" style="flex:1">← Back to Prepare Trade</button>
+      <button class="action-btn primary" id="proceedPlaceBtn" onclick="goStep('place')" disabled style="flex:2">🚀 All Greeks OK — Place Order →</button>
+    </div>
+  </div>
+
+  <!-- PLACE ORDER VIEW -->
+  <div id="view-place" style="display:none">
+    <div class="sec-hd">
+      <div class="sec-title">🚀 Place Order <span class="sec-badge orange">STEP 6</span></div>
+      <span style="font-size:10px;color:var(--tm)">All 4 legs fired simultaneously via parallel threads</span>
+    </div>
+    <div class="order-grid" id="orderGrid"></div>
+    <div class="ctrl-row">
+      <span class="ctrl-lbl">Lots:</span>
+      <input type="number" class="ctrl-inp w60" id="lotsInput" value="1" min="1" max="50" onchange="refreshOrderGrid()"/>
+      <span class="ctrl-lbl">Product:</span>
+      <select class="ctrl-inp w80" id="prodSelect" onchange="refreshOrderGrid()">
+        <option value="NRML">CNC — Carry Forward</option>
+        <option value="MIS">MIS — Intraday</option>
+      </select>
+      <span id="lotInfo" style="font-size:10px;color:var(--tm)">Lot: — | Qty: —</span>
+    </div>
+    <div id="placeGreeksStatus" style="margin-bottom:10px;padding:10px 14px;border-radius:6px;font-size:12px;font-weight:700;display:none"></div>
+
+    <div id="amountRequiredBox" style="margin:10px 0 14px;border-radius:8px;border:1px solid rgba(255,152,0,.35);background:rgba(255,152,0,.06);padding:12px 14px;">
+      <div style="font-size:10px;font-weight:800;color:#e65100;letter-spacing:.5px;margin-bottom:8px">💰 CAPITAL REQUIRED (ESTIMATE)</div>
+      <div id="amountLegsBreakdown" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px"></div>
+      <div style="border-top:1px solid rgba(255,152,0,.25);padding-top:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+        <div>
+          <span style="font-size:10px;color:var(--tm)">BUY Premium</span>
+          <div style="font-size:13px;font-weight:700;color:var(--grn)" id="amtBuyTotal">₹ —</div>
+        </div>
+        <div>
+          <span style="font-size:10px;color:var(--tm)">SELL Margin</span>
+          <div style="font-size:13px;font-weight:700;color:var(--red)" id="amtSellTotal">₹ —</div>
+        </div>
+        <div style="text-align:right">
+          <span style="font-size:10px;color:var(--tm)">NET CAPITAL</span>
+          <div style="font-size:16px;font-weight:800;color:var(--orange,#e65100)" id="amtNetTotal">₹ —</div>
+        </div>
+      </div>
+      <div style="font-size:9px;color:var(--tm);margin-top:6px">
+        BUY = LTP × Qty (premium paid) · SELL = <span id="marginSourceLabel">SPAN estimate (paper) or Zerodha exact (live)</span> · Qty = Lots × <span id="amtLotSize">—</span>
+      </div>
+    </div>
+
+    <hr class="divider"/>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="action-btn primary" id="placeOrderBtn" onclick="initPlaceOrders()" style="flex:1;min-width:160px">⚡ PLACE ALL LEGS</button>
+      <button class="action-btn outline" id="paperTradeBtn" onclick="doPaperTrade()" style="flex:1;min-width:140px;background:rgba(33,150,243,.08);border-color:var(--blue);color:var(--blue)">📋 PAPER TRADE</button>
+    </div>
+    <div style="margin-top:8px">
+      <button class="action-btn outline sm" onclick="goStep('check')" style="width:auto">← Back to Check Greeks</button>
+    </div>
+  </div>
+
+  <!-- MONITOR VIEW -->
+  <div id="view-monitor" style="display:none">
+    <!-- Header row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div class="sec-title">🔍 Monitor Trade — Live 1s Check <span class="sec-badge orange">STEP 7</span></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="action-btn outline sm" style="width:auto;font-size:10px;border-color:var(--grn);color:var(--grn)" onclick="startNewTrade()">🔄 New Trade</button>
+        <button class="action-btn outline sm" style="width:auto;font-size:10px" onclick="clearAlertHistory()">🗑 Clear Alerts</button>
+        <button class="mon-toggle" id="monToggle" onclick="toggleMonitor()"><div class="mdot y"></div> START MONITORING</button>
+        <div class="mon-timer" id="monTimerRow" style="display:none">Next: <b id="timerCount">1</b>s</div>
+      </div>
+    </div>
+
+    <!-- ══ LIVE GREEKS DASHBOARD ══ -->
+    <div id="greeksLiveDash" style="display:none;margin-bottom:14px">
+      <div style="font-size:10px;font-weight:800;color:var(--tp);letter-spacing:.05em;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+        📡 LIVE GREEKS
+        <span id="liveGreeksTs" style="font-size:9px;font-weight:400;color:var(--tm)">—</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div id="lgCard_delta" class="live-greek-card">
+          <div class="lgc-label">Δ NET DELTA</div>
+          <div class="lgc-value" id="lgVal_delta">—</div>
+          <div class="lgc-range" id="lgRange_delta">—</div>
+          <div class="lgc-bar-wrap"><div class="lgc-bar-track"><div class="lgc-bar-fill" id="lgBar_delta"></div></div></div>
+          <div class="lgc-status" id="lgStatus_delta">—</div>
+        </div>
+        <div id="lgCard_theta" class="live-greek-card">
+          <div class="lgc-label">θ NET THETA</div>
+          <div class="lgc-value" id="lgVal_theta">—</div>
+          <div class="lgc-range" id="lgRange_theta">—</div>
+          <div class="lgc-bar-wrap"><div class="lgc-bar-track"><div class="lgc-bar-fill" id="lgBar_theta"></div></div></div>
+          <div class="lgc-status" id="lgStatus_theta">—</div>
+        </div>
+        <div id="lgCard_vega" class="live-greek-card">
+          <div class="lgc-label">ν NET VEGA</div>
+          <div class="lgc-value" id="lgVal_vega">—</div>
+          <div class="lgc-range" id="lgRange_vega">—</div>
+          <div class="lgc-bar-wrap"><div class="lgc-bar-track"><div class="lgc-bar-fill" id="lgBar_vega"></div></div></div>
+          <div class="lgc-status" id="lgStatus_vega">—</div>
+        </div>
+        <div id="lgCard_gamma" class="live-greek-card">
+          <div class="lgc-label">Γ NET GAMMA</div>
+          <div class="lgc-value" id="lgVal_gamma">—</div>
+          <div class="lgc-range" id="lgRange_gamma">—</div>
+          <div class="lgc-bar-wrap"><div class="lgc-bar-track"><div class="lgc-bar-fill" id="lgBar_gamma"></div></div></div>
+          <div class="lgc-status" id="lgStatus_gamma">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ACTIVE ALERT BANNERS ══ -->
+    <div id="alertBannersWrap" style="display:none;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:var(--red);letter-spacing:.06em;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <span style="animation:blink .7s infinite;display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red)"></span>
+        🚨 ACTIVE ALERTS — Action Required
+      </div>
+      <div id="alertBannersInner"></div>
+    </div>
+
+    <!-- ══ ALERT HISTORY LOG ══ -->
+    <div id="alertHistorySection" style="display:none;margin-bottom:12px;background:var(--white);border:1px solid rgba(211,47,47,.25);border-radius:8px;overflow:hidden">
+      <div style="padding:10px 14px;background:#fff5f5;border-bottom:1px solid rgba(211,47,47,.15);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;font-weight:800;color:var(--red)">⚡ ALERT HISTORY</span>
+        <span id="alertHistoryCount" style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--red-l);color:var(--red)">0 alerts</span>
+      </div>
+      <div id="alertHistoryList" style="max-height:180px;overflow-y:auto;padding:8px 14px;font-family:var(--mono);font-size:10px;line-height:1.8"></div>
+    </div>
+
+    <!-- Range reference bar -->
+    <div style="background:#e8f0fe;border:1px solid rgba(21,101,192,.15);border-radius:6px;padding:10px 14px;margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:10px;font-weight:800;color:var(--blue)">ALERT RANGES:</span>
+      <span style="font-size:10px;color:var(--tp)">Δ <strong id="dispMonDelta">−0.10 to +0.10</strong></span>
+      <span style="font-size:10px;color:var(--tp)">θ <strong id="dispMonTheta">+3 to +5000</strong></span>
+      <span style="font-size:10px;color:var(--tp)">ν <strong id="dispMonVega">−10 to +10</strong></span>
+      <span style="font-size:10px;color:var(--tp)">Γ <strong id="dispMonGamma">−0.005 to +0.005</strong></span>
+      <button onclick="goStep('config')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;border:1px solid var(--blue);background:transparent;color:var(--blue);cursor:pointer">Edit ⚙</button>
+    </div>
+
+    <div class="net-delta-box" style="margin-bottom:10px">
+      <div class="nd-label">NET PORTFOLIO DELTA (Alert range: <span id="monDeltaMin">−0.10</span> to <span id="monDeltaMax">+0.10</span>)</div>
+      <div class="nd-value" id="monNdValue">—</div>
+      <div class="nd-track" style="position:relative"><div class="nd-fill ok" id="monNdFill" style="width:0;position:absolute;left:50%"></div></div>
+      <div class="nd-labels"><span id="monDeltaMinLbl">−0.10</span><span style="color:var(--grn)">0</span><span id="monDeltaMaxLbl">+0.10</span></div>
+      <div class="nd-verdict idle" id="monNdVerdict">—</div>
+    </div>
+
+    <div id="pnlSection" style="display:none;margin-bottom:12px;padding:12px;background:var(--white);border:1px solid var(--bdr);border-radius:8px;">
+      <div class="sec-title" style="margin-bottom:10px">💰 P&L Tracker (Steps 8a + 8b)</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+        <div class="pnl-box"><div class="pnl-row"><span class="pnl-key">Total P&L</span></div><div class="pnl-val" id="pnlTotal" style="font-size:16px">₹0.00</div></div>
+        <div class="pnl-box"><div class="pnl-row"><span class="pnl-key">Invested</span></div><div class="pnl-val" id="pnlInvested" style="font-size:16px;color:var(--ts)">₹0.00</div></div>
+        <div class="pnl-box"><div class="pnl-row"><span class="pnl-key">Profit Target (<span id="profitPctLabel">1</span>%)</span></div><div class="pnl-val pos" id="pnlTarget">₹0.00</div><div class="pnl-bar"><div class="pnl-fill profit" id="pnlTargetBar" style="width:0"></div></div></div>
+        <div class="pnl-box"><div class="pnl-row"><span class="pnl-key">Max Loss (<span id="lossPctLabel">2</span>%)</span></div><div class="pnl-val neg" id="pnlMaxLoss">₹0.00</div><div class="pnl-bar"><div class="pnl-fill loss" id="pnlLossBar" style="width:0"></div></div></div>
+      </div>
+    </div>
+
+    <div class="pos-cards-grid" id="posGrid"><div class="no-data" style="grid-column:1/-1">No positions. Place orders first.</div></div>
+
+    <div id="exitSection" style="display:none;margin-top:14px;">
+      <button class="action-btn danger" style="font-size:14px;padding:12px 16px;" onclick="initExit()">⚠ EXIT ALL POSITIONS</button>
+    </div>
+  </div>
+
+  <!-- CONFIG VIEW -->
+  <div id="view-config" style="display:none">
+    <div class="config-view">
+      <div class="sec-title" style="margin-bottom:6px">⚙ Greeks Configuration</div>
+      <div style="font-size:11px;color:var(--tm);margin-bottom:16px;padding:8px 12px;background:var(--white);border:1px solid var(--bdr);border-radius:5px;line-height:1.7">
+        Edit Greek ranges here. Changes take effect immediately and are saved in browser storage.
+      </div>
+
+      <div class="config-section" style="border-left:3px solid #7c3aed">
+        <div class="cfg-title">🎯 Leg Selection — Auto-Fill Config (Step 3)</div>
+        <div style="margin-bottom:14px;padding:12px 14px;background:var(--pur-l);border-radius:6px;border:1px solid rgba(124,58,237,.15);font-size:10px;line-height:2">
+          <div style="font-weight:800;color:var(--pur);margin-bottom:6px;font-size:11px">Selection Logic</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:3px">
+            <span style="background:var(--blue-l);color:var(--blue);font-weight:800;font-size:9px;padding:2px 8px;border-radius:10px;white-space:nowrap">LEG 1</span>
+            <span style="color:var(--tm)">Current week <strong>CE SELL</strong> — find strike with <strong>delta ≤ +0.20, closest from below</strong></span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:3px">
+            <span style="background:var(--red-l);color:var(--red);font-weight:800;font-size:9px;padding:2px 8px;border-radius:10px;white-space:nowrap">LEG 2</span>
+            <span style="color:var(--tm)">Current week <strong>PE SELL</strong> — find strike with <strong>delta ≥ −0.20, closest from above</strong></span>
+          </div>
+          <div style="padding-left:4px;color:var(--pur);font-size:9px;margin:4px 0 6px">
+            ↓ Read vega from Leg 1 → store as <strong>V1</strong> &nbsp;·&nbsp; Read vega from Leg 2 → store as <strong>V2</strong>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:3px">
+            <span style="background:var(--pur-l);color:var(--pur);font-weight:800;font-size:9px;padding:2px 8px;border-radius:10px;border:1px solid rgba(124,58,237,.25);white-space:nowrap">LEG 3</span>
+            <span style="color:var(--tm)">Next week <strong>CE BUY</strong> — find strike whose <strong>vega is closest to V1</strong></span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="background:var(--pur-l);color:var(--pur);font-weight:800;font-size:9px;padding:2px 8px;border-radius:10px;border:1px solid rgba(124,58,237,.25);white-space:nowrap">LEG 4</span>
+            <span style="color:var(--tm)">Next week <strong>PE BUY</strong> — find strike whose <strong>vega is closest to V2</strong></span>
+          </div>
+        </div>
+
+        <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);margin-bottom:6px">Legs 1 &amp; 2 — Delta Target</div>
+        <div class="cfg-grid" style="margin-bottom:14px">
+          <div class="cfg-field">
+            <div class="cfg-lbl" style="color:#1565c0">Leg 1 — CE Delta Target</div>
+            <input class="cfg-inp" id="cfg_sel_ce_delta" type="number" step="0.01" value="0.20"/>
+            <div class="cfg-note">CE SELL — pick strike with delta ≤ this value (closest from below).<br>V1 = vega of selected CE → used to pick Leg 3.</div>
+          </div>
+          <div class="cfg-field">
+            <div class="cfg-lbl" style="color:#1565c0">Leg 2 — PE Delta Target</div>
+            <input class="cfg-inp" id="cfg_sel_pe_delta" type="number" step="0.01" value="-0.20"/>
+            <div class="cfg-note">PE SELL — pick strike with delta ≥ this value (closest from above).<br>V2 = vega of selected PE → used to pick Leg 4.</div>
+          </div>
+          <div class="cfg-field">
+            <div class="cfg-lbl" style="color:#e65100">Delta Buffer ±</div>
+            <input class="cfg-inp" id="cfg_sel_delta_buffer" type="number" step="0.01" value="0.05"/>
+            <div class="cfg-note">Prefer strikes within target ± buffer first.</div>
+          </div>
+        </div>
+
+        <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--pur);margin-bottom:6px">Legs 3 &amp; 4 — Next Week Vega Match</div>
+        <div class="cfg-grid">
+          <div class="cfg-field" style="display:none">
+            <input class="cfg-inp" id="cfg_sel_vega_tol" type="number" step="0.05" value="0.3"/>
+          </div>
+          <div style="grid-column:span 3;padding:10px 12px;background:var(--white);border:1px solid rgba(124,58,237,.2);border-radius:5px;font-size:10px;color:var(--ts);line-height:1.8">
+            <strong style="color:var(--pur)">Logic:</strong> From next-week chain, find CE with vega closest to V1 → Leg 3. Find PE with vega closest to V2 → Leg 4. Always picks the single closest match.
+          </div>
+        </div>
+      </div>
+
+      <div class="config-section" style="border-left:3px solid var(--primary)">
+        <div class="cfg-title">📋 Pre-Trade Check Ranges (Step 4) <span class="range-badge">All must PASS</span></div>
+        <div style="font-size:10px;color:var(--tm);margin-bottom:12px;padding:8px 10px;background:var(--primary-l);border-radius:5px;line-height:1.6">If any Greek falls outside its range, order placement is blocked.</div>
+        <div class="cfg-grid">
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--primary)">Delta Min</div><input class="cfg-inp" id="cfg_pre_delta_min" type="number" step="0.01" value="-0.07"/></div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--primary)">Delta Max</div><input class="cfg-inp" id="cfg_pre_delta_max" type="number" step="0.01" value="0.07"/></div>
+          <div style="padding:8px 10px;background:var(--red-l);border-radius:5px;font-size:9px;color:var(--red);line-height:1.5;align-self:end">Alert: "NOT as per expected delta range..."</div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--grn)">Theta Min</div><input class="cfg-inp" id="cfg_pre_theta_min" type="number" step="1" value="5"/></div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--grn)">Theta Max</div><input class="cfg-inp" id="cfg_pre_theta_max" type="number" step="1" value="500"/></div>
+          <div style="padding:8px 10px;background:var(--red-l);border-radius:5px;font-size:9px;color:var(--red);line-height:1.5;align-self:end">Alert: "NOT as per expected theta range..."</div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--blue)">Vega Min</div><input class="cfg-inp" id="cfg_pre_vega_min" type="number" step="1" value="-7"/></div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--blue)">Vega Max</div><input class="cfg-inp" id="cfg_pre_vega_max" type="number" step="1" value="7"/></div>
+          <div style="padding:8px 10px;background:var(--red-l);border-radius:5px;font-size:9px;color:var(--red);line-height:1.5;align-self:end">Alert: "NOT as per expected vega range..."</div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--pur)">Gamma Min</div><input class="cfg-inp" id="cfg_pre_gamma_min" type="number" step="0.001" value="-0.004"/></div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--pur)">Gamma Max</div><input class="cfg-inp" id="cfg_pre_gamma_max" type="number" step="0.001" value="0.004"/></div>
+          <div style="padding:8px 10px;background:var(--red-l);border-radius:5px;font-size:9px;color:var(--red);line-height:1.5;align-self:end">Alert: "NOT as per expected gamma range..."</div>
+        </div>
+      </div>
+
+      <div class="config-section" style="border-left:3px solid var(--blue)">
+        <div class="cfg-title">🔍 Monitoring Ranges (Steps 7 &amp; 8a) <span style="background:var(--blue-l);color:var(--blue);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:8px">1-second live check</span></div>
+        <div style="font-size:10px;color:var(--tm);margin-bottom:12px;padding:8px 10px;background:var(--blue-l);border-radius:5px;line-height:1.6">Breach triggers alert and WhatsApp notification.</div>
+        <div class="cfg-grid">
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--primary)">Delta Min</div><input class="cfg-inp" id="cfg_mon_delta_min" type="number" step="0.01" value="-0.10"/></div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--primary)">Delta Max</div><input class="cfg-inp" id="cfg_mon_delta_max" type="number" step="0.01" value="0.10"/></div>
+          <div style="padding:8px 10px;background:var(--gld-l);border-radius:5px;font-size:9px;color:var(--gld);line-height:1.5;align-self:end">Alert: "Delta monitoring range reached..."</div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--grn)">Theta Min</div><input class="cfg-inp" id="cfg_mon_theta_min" type="number" step="1" value="3"/></div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--grn)">Theta Max</div><input class="cfg-inp" id="cfg_mon_theta_max" type="number" step="1" value="5000"/></div>
+          <div style="padding:8px 10px;background:var(--gld-l);border-radius:5px;font-size:9px;color:var(--gld);line-height:1.5;align-self:end">Alert: "Theta monitoring range reached..."</div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--blue)">Vega Min</div><input class="cfg-inp" id="cfg_mon_vega_min" type="number" step="0.5" value="-10"/></div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--blue)">Vega Max</div><input class="cfg-inp" id="cfg_mon_vega_max" type="number" step="0.5" value="10"/></div>
+          <div style="padding:8px 10px;background:var(--gld-l);border-radius:5px;font-size:9px;color:var(--gld);line-height:1.5;align-self:end">Alert: "Vega monitoring range reached..."</div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--pur)">Gamma Min</div><input class="cfg-inp" id="cfg_mon_gamma_min" type="number" step="0.001" value="-0.005"/></div>
+          <div class="cfg-field"><div class="cfg-lbl" style="color:var(--pur)">Gamma Max</div><input class="cfg-inp" id="cfg_mon_gamma_max" type="number" step="0.001" value="0.005"/></div>
+          <div style="padding:8px 10px;background:var(--gld-l);border-radius:5px;font-size:9px;color:var(--gld);line-height:1.5;align-self:end">Alert: "Gamma monitoring range reached..."</div>
+        </div>
+      </div>
+
+      <div class="config-section" style="border-left:3px solid var(--grn)">
+        <div class="cfg-title">💰 P&amp;L Targets (Step 8b)</div>
+        <div class="cfg-grid">
+          <div class="cfg-field"><div class="cfg-lbl">Profit Target %</div><input class="cfg-inp" id="cfg_profit_pct" type="number" step="0.1" value="1.0"/><div class="cfg-note">% of total invested capital</div></div>
+          <div class="cfg-field"><div class="cfg-lbl">Max Loss %</div><input class="cfg-inp" id="cfg_loss_pct" type="number" step="0.1" value="2.0"/><div class="cfg-note">Exit trade beyond this loss</div></div>
+          <div></div>
+        </div>
+      </div>
+
+      <button class="cfg-save-btn" id="cfgSaveBtn" onclick="saveConfig()">💾 Save Configuration</button>
+      <button onclick="resetConfig()" style="margin-left:10px;padding:9px 20px;background:transparent;color:var(--tm);border:1px solid var(--bdr);border-radius:5px;font-size:12px;font-weight:700;cursor:pointer">↺ Reset to Defaults</button>
+    </div>
+  </div>
+
+  <!-- LOGS VIEW -->
+  <div id="view-logs" style="display:none">
+    <div class="sec-hd">
+      <div class="sec-title">📋 Trade Log — Step 9</div>
+      <div style="display:flex;gap:8px">
+        <button class="action-btn outline sm" style="width:auto" onclick="downloadLogs()">⬇ Download</button>
+        <button class="action-btn outline sm" style="width:auto" onclick="clearLogs()">Clear</button>
+      </div>
+    </div>
+    <div class="log-box" id="logBox" style="max-height:400px"><div class="log-entry"><span class="log-ts">[INIT]</span> <span class="log-info">Terminal loaded. Ready for trading.</span></div></div>
+    <div id="tradeHistorySection" style="margin-top:12px;display:none"><div class="sec-title" style="margin-bottom:8px">Trade History</div><div id="tradeHistoryList"></div></div>
+  </div>
+
+</div><!-- /main-content -->
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="panel" id="sideCheckPanel">
+    <div class="panel-title"><span class="pnum" id="spnum-check">4</span>Check Greeks (Pre-Trade)</div>
+    <div id="sideCheckContent"><div style="font-size:11px;color:var(--tm)">Add legs in Prepare Trade to validate Greeks here.</div></div>
+  </div>
+  <div class="panel" id="sideLegPanel">
+    <div class="panel-title"><span class="pnum" style="background:var(--blue)">L</span>Selected Legs</div>
+    <div id="sideLegSummary"><div style="font-size:11px;color:var(--tm)">No legs selected.</div></div>
+    <div style="margin-top:10px"><button class="action-btn outline sm" onclick="goStep('trade')">+ Add/Edit Legs</button></div>
+  </div>
+
+  <div class="panel" id="sideVegaPanel">
+    <div class="panel-title"><span class="pnum" style="background:var(--pur)">ν</span>Vega Flow (L1→L3 · L2→L4)</div>
+    <div id="sideVegaContent"><div style="font-size:11px;color:var(--tm)">Run Auto-Fill to see vega flow.</div></div>
+  </div>
+
+  <div class="panel" id="sideMonPanel">
+    <div class="panel-title"><span class="pnum" id="spnum-mon">8</span>Monitoring Greeks</div>
+    <div id="sideMonContent"><div style="font-size:11px;color:var(--tm)">Monitoring not started.</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title"><span class="pnum" style="background:var(--grn)">$</span>P&L Targets (Step 8b)</div>
+    <div style="font-size:10px;color:var(--tm);margin-bottom:8px">From config: profit <span id="sbProfitPct">1</span>%, max loss <span id="sbLossPct">2</span>% of invested</div>
+    <div class="pnl-box"><div class="pnl-row"><span class="pnl-key">Profit Target</span><span class="pnl-val pos" id="sbPnlTarget">—</span></div></div>
+    <div class="pnl-box"><div class="pnl-row"><span class="pnl-key">Max Loss Limit</span><span class="pnl-val neg" id="sbPnlLoss">—</span></div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title"><span class="pnum" style="background:#25d366;font-size:10px">WA</span>WhatsApp Alerts</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <input type="checkbox" id="waEnabled" onchange="toggleWa(this.checked)" style="width:14px;height:14px;cursor:pointer"/>
+      <span style="font-size:11px;color:var(--ts)">Enable WhatsApp via Twilio</span>
+    </div>
+    <div id="waPanel" style="display:none">
+      <input class="cfg-inp" id="waPhone" placeholder="whatsapp:+919876543210" style="width:100%;margin-bottom:6px" oninput="saveWa()"/>
+      <input class="cfg-inp" id="waSid" placeholder="Twilio Account SID" style="width:100%;margin-bottom:6px" oninput="saveWa()"/>
+      <input class="cfg-inp" id="waToken" type="password" placeholder="Auth Token" style="width:100%;margin-bottom:6px" oninput="saveWa()"/>
+      <button class="action-btn outline sm" onclick="testWa()">📲 Test</button>
+      <span id="waTestStatus" style="font-size:10px;color:var(--tm);margin-left:8px"></span>
+    </div>
+  </div>
+</div>
+</div><!-- /main-layout -->
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIGURATION
+// ══════════════════════════════════════════════
+const API = "http://127.0.0.1:8000";
+const IDX_MAP = {
+  nifty50:    {label:"NIFTY 50",          idx:"NIFTY",      lot:65,  step:50},
+  banknifty:  {label:"NIFTY BANK",        idx:"BANKNIFTY",  lot:30,  step:100},
+  sensex:     {label:"SENSEX",            idx:"SENSEX",     lot:20,  step:100},
+  finnifty:   {label:"NIFTY FIN SERVICE", idx:"FINNIFTY",   lot:60,  step:50},
+  midcpnifty: {label:"NIFTY MIDCAP 50",   idx:"MIDCPNIFTY", lot:120, step:25},
+};
+const slug    = (new URLSearchParams(location.search).get("index")||"nifty50").toLowerCase();
+const idxConf = IDX_MAP[slug]||IDX_MAP.nifty50;
+const IDX=idxConf.idx, LOT=idxConf.lot, STEP=idxConf.step;
+
+const DEFAULT_CFG = {
+  sel:  {ce_delta:0.20, pe_delta:-0.20, delta_buffer:0.05, vega_tol:0.3},
+  pre:  {delta_min:-0.07,delta_max:0.07,theta_min:5,theta_max:500,vega_min:-7,vega_max:7,gamma_min:-0.004,gamma_max:0.004},
+  mon:  {delta_min:-0.10,delta_max:0.10,theta_min:3,theta_max:5000,vega_min:-10,vega_max:10,gamma_min:-0.005,gamma_max:0.005},
+  pnl:  {profit_pct:1.0,loss_pct:2.0}
+};
+
+const PRE_ALERTS = {
+  delta:"Selected trade is NOT as per expected delta range, please check for other strikes and expiry combinations",
+  theta:"Selected trade is NOT as per expected theta range, please check for other strikes and expiry combinations",
+  vega: "Selected trade is NOT as per expected vega range, please check for other strikes and expiry combinations",
+  gamma:"Selected trade is NOT as per expected gamma range, please check for other strikes and expiry combinations",
+};
+const MON_ALERTS = {
+  delta:"Allowed Delta monitoring range is reached, proceed for adjustment or exit trade",
+  theta:"Allowed Theta monitoring range is reached, proceed for adjustment or exit trade",
+  vega: "Allowed Vega monitoring range is reached, proceed for adjustment or exit trade",
+  gamma:"Allowed Gamma monitoring range is reached, proceed for adjustment or exit trade",
+};
+
+// ── State ──
+let chain=[],chainByExpiry={},availableExpiries=[],activeExpiry=null;
+let isFetching=false,isExpFetching={},firstLoad=true,_lastFetchStart=0;
+let legs=[],placedLegs=[];
+let monActive=false,monInterval=null,monFetching=false,timerSec=1;
+let tradeHistory=[],lastAlertTs=0,greeksCheckPassed=false,logEntries=[];
+let paperMode=true;
+let CFG=JSON.parse(JSON.stringify(DEFAULT_CFG));
+
+function getLegDeltaMax(){ return Math.round((Math.abs(CFG.sel?.ce_delta ?? 0.20) + 0.05)*100)/100; }
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+document.addEventListener("DOMContentLoaded",()=>{
+  const parts=idxConf.label.split(" ");
+  document.getElementById("pageTitle").innerHTML=parts.slice(0,-1).join(" ")+" <span>"+parts.slice(-1)[0]+"</span>";
+  document.title=idxConf.label+" Terminal";
+
+  loadConfig();
+  updateConfigDisplayBars();
+  loadConfigUI();
+  loadWaConfig();
+  loadTradeHistory();
+  loadPlacedLegs();
+  renderLegCards();
+  refreshOrderGrid();
+  fetchPaperStatus();
+
+  fetchGreeks();fetchSpot();
+  setInterval(()=>{
+    if(!isFetching){fetchGreeks();fetchSpot();}
+    if(isFetching&&Date.now()-(_lastFetchStart||0)>15000){isFetching=false;}
+  },900);
+  addLog("INFO",`Terminal started — ${idxConf.label} | CFG: CE Δ=${CFG.sel.ce_delta} PE Δ=${CFG.sel.pe_delta} T=${CFG.sel.vega_tol}`);
+});
+
+function fmtRange(min, max) {
+  const minStr = min < 0 ? String(min) : "+" + min;
+  const maxStr = max < 0 ? String(max) : "+" + max;
+  return minStr + " to " + maxStr;
+}
+
+function updateConfigDisplayBars(){
+  const el=id=>document.getElementById(id);
+  if(el("dispPreDelta")) el("dispPreDelta").textContent = fmtRange(CFG.pre.delta_min, CFG.pre.delta_max);
+  if(el("dispPreTheta")) el("dispPreTheta").textContent = fmtRange(CFG.pre.theta_min, CFG.pre.theta_max);
+  if(el("dispPreVega"))  el("dispPreVega").textContent  = fmtRange(CFG.pre.vega_min,  CFG.pre.vega_max);
+  if(el("dispPreGamma")) el("dispPreGamma").textContent = fmtRange(CFG.pre.gamma_min, CFG.pre.gamma_max);
+  if(el("dispMonDelta")) el("dispMonDelta").textContent = fmtRange(CFG.mon.delta_min, CFG.mon.delta_max);
+  if(el("dispMonTheta")) el("dispMonTheta").textContent = fmtRange(CFG.mon.theta_min, CFG.mon.theta_max);
+  if(el("dispMonVega"))  el("dispMonVega").textContent  = fmtRange(CFG.mon.vega_min,  CFG.mon.vega_max);
+  if(el("dispMonGamma")) el("dispMonGamma").textContent = fmtRange(CFG.mon.gamma_min, CFG.mon.gamma_max);
+  if(el("monDeltaMin"))    el("monDeltaMin").textContent    = String(CFG.mon.delta_min);
+  if(el("monDeltaMax"))    el("monDeltaMax").textContent    = String(CFG.mon.delta_max);
+  if(el("monDeltaMinLbl")) el("monDeltaMinLbl").textContent = String(CFG.mon.delta_min);
+  if(el("monDeltaMaxLbl")) el("monDeltaMaxLbl").textContent = "+"+CFG.mon.delta_max;
+  if(el("profitPctLabel")) el("profitPctLabel").textContent = CFG.pnl.profit_pct;
+  if(el("lossPctLabel"))   el("lossPctLabel").textContent   = CFG.pnl.loss_pct;
+  if(el("sbProfitPct"))    el("sbProfitPct").textContent    = CFG.pnl.profit_pct;
+  if(el("sbLossPct"))      el("sbLossPct").textContent      = CFG.pnl.loss_pct;
+  if(el("descCeDelta"))  el("descCeDelta").textContent  = CFG.sel.ce_delta;
+  if(el("descPeDelta"))  el("descPeDelta").textContent  = CFG.sel.pe_delta;
+  if(el("descVegaTol"))  el("descVegaTol").textContent  = CFG.sel.vega_tol;
+  if(el("descVegaTol2")) el("descVegaTol2").textContent = CFG.sel.vega_tol;
+  if(el("vfbTolLabel"))  el("vfbTolLabel").textContent  = CFG.sel.vega_tol;
+  const eligMax=(Math.abs(CFG.sel?.ce_delta??0.20)+0.05).toFixed(2);
+  if(el("chainEligHint")) el("chainEligHint").textContent="Δ ±"+eligMax+" (target "+Math.abs(CFG.sel?.ce_delta??0.20)+")";
+}
+
+function goStep(step){
+  ["greeks","trade","check","place","monitor","config","logs"].forEach(v=>{
+    document.getElementById("view-"+v).style.display=v===step?"":"none";
+  });
+  document.querySelectorAll(".sb-btn").forEach(b=>b.classList.remove("active"));
+  const btn=document.getElementById("sbtn-"+step);if(btn)btn.classList.add("active");
+  updateConfigDisplayBars();
+  if(step==="check")   { runGreeksCheck(); updateSideCheck(); }
+  if(step==="trade")   { renderLegCards(); updateVegaFlowUI(); }
+  if(step==="place")   { refreshOrderGrid(); updatePlaceGreeksStatus(); refreshAmountRequired(); }
+  if(step==="monitor") {
+    renderMonitorCards();
+    updateSideMon();
+    document.getElementById("exitSection").style.display = placedLegs.length ? "" : "none";
+  }
+  if(step==="config")  { loadConfigUI(); }
+}
+
+function startNewTrade(){
+  if(monActive && placedLegs.length){
+    showExitConfirm(
+      "Start New Trade?",
+      "You have active positions being monitored. Starting a new trade will ONLY reset the leg selection — your open positions will remain in monitor. Continue?",
+      ()=>{ _doNewTrade(); }
+    );
+    return;
+  }
+  _doNewTrade();
+}
+
+function _doNewTrade(){
+  legs=[];
+  greeksCheckPassed=false;
+  ["trade","check","place"].forEach(s=>{
+    const b=document.getElementById("sbtn-"+s);
+    if(b){ b.classList.remove("locked","done"); if(s!=="trade") b.classList.add("locked"); }
+  });
+  const procBtn=document.getElementById("proceedPlaceBtn");
+  if(procBtn) procBtn.setAttribute("disabled","");
+  const vfb=document.getElementById("vegaFlowBox");if(vfb) vfb.style.display="none";
+  addLog("INFO","New trade started — legs cleared, ready to select from Greeks chain");
+  toast("🔄 New trade started — select legs from Greeks chain","ok");
+  goStep("greeks");
+}
+
+function updatePlaceGreeksStatus(){
+  const el=document.getElementById("placeGreeksStatus");
+  if(!el) return;
+  if(greeksCheckPassed){
+    el.style.display="";
+    el.style.background="var(--grn-l)";
+    el.style.border="1px solid rgba(0,166,81,.3)";
+    el.style.color="var(--grn)";
+    el.textContent="✓ Greeks check passed — ready to place order";
+    document.getElementById("placeOrderBtn").disabled=false;
+  } else {
+    el.style.display="";
+    el.style.background="var(--red-l)";
+    el.style.border="1px solid rgba(211,47,47,.3)";
+    el.style.color="var(--red)";
+    el.textContent="⚠ Greeks check not passed — go back to Check Greeks step and resolve all issues before placing";
+    document.getElementById("placeOrderBtn").disabled=false;
+  }
+}
+
+// ══════════════════════════════════════════════
+//  SPOT
+// ══════════════════════════════════════════════
+async function fetchSpot(){
+  try{
+    const d=await apiFetch(`${API}/indices`);
+    if(d?.status==="success"){
+      const idx=d.indices?.find(i=>i.name===idxConf.label);
+      if(idx){
+        document.getElementById("spotPrice").textContent=fmt(idx.last_price);
+        const el=document.getElementById("spotChg");
+        el.textContent=sign(idx.change)+fmt(idx.change)+" ("+sign(idx.change_percent)+fmt(idx.change_percent)+"%)";
+        el.className="spot-chg "+(idx.change>=0?"up":"dn");
+      }
+      const pill=document.getElementById("mktPill"),dot=document.getElementById("mdot"),txt=document.getElementById("mktTxt");
+      if(d.market_open){pill.className="mkt-pill open";dot.className="mdot g";txt.textContent="LIVE";}
+      else{pill.className="mkt-pill closed";dot.className="mdot y";txt.textContent="CLOSED";}
+    }
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════════
+//  GREEKS FETCH + RENDER
+// ══════════════════════════════════════════════
+async function fetchGreeks(){
+  if(isFetching)return;
+  isFetching=true;_lastFetchStart=Date.now();
+  document.getElementById("spinner").style.display="";
+  try{
+    const url=activeExpiry
+      ?`${API}/greeks?index=${IDX}&expiry=${activeExpiry}&num_strikes=40`
+      :`${API}/greeks?index=${IDX}&num_strikes=40`;
+    const ctrl=new AbortController();
+    const _t=setTimeout(()=>ctrl.abort(),15000);
+    let r;
+    try{r=await fetch(url,{signal:ctrl.signal});}
+    finally{clearTimeout(_t);}
+    if(!r.ok){
+      const errMsg=`Server error ${r.status} — check if backend is running`;
+      showGreeksErr(errMsg);
+      addLog("ERR","fetchGreeks: "+errMsg);
+      document.getElementById("lastUpdateGreeks").textContent="Error "+new Date().toLocaleTimeString("en-IN",{hour12:false});
+      return;
+    }
+    let d;
+    try{ d=await r.json(); }
+    catch(jsonErr){
+      showGreeksErr("Invalid response from server — not JSON");
+      addLog("ERR","fetchGreeks: JSON parse failed: "+jsonErr.message);
+      return;
+    }
+    if(d.status==="error"){
+      showGreeksErr(d.error||"Unknown error from server");
+      addLog("ERR","fetchGreeks server error: "+(d.error||"unknown"));
+      document.getElementById("lastUpdateGreeks").textContent="Error "+new Date().toLocaleTimeString("en-IN",{hour12:false});
+      return;
+    }
+    if(d.chain?.length){
+      chain=d.chain; firstLoad=false;
+      if(d.all_expiries?.length){availableExpiries=d.all_expiries;buildPills(d.all_expiries,activeExpiry||d.expiry);}
+      if(!activeExpiry)activeExpiry=d.expiry;
+      chainByExpiry[d.expiry]=d.chain;
+      renderGreeks(chain,d.atm_strike);
+      document.getElementById("lastUpdateGreeks").textContent="Updated "+new Date().toLocaleTimeString("en-IN",{hour12:false});
+      addLog("INFO",`Greeks loaded: ${d.chain.length} rows | spot=${d.spot} ATM=${d.atm_strike} expiry=${d.expiry}`);
+      refreshLegsFromChain();
+    }else{
+      showGreeksErr("No chain data returned — market may be closed or access token expired");
+      addLog("WARN","fetchGreeks: empty chain. spot="+d.spot+" expiry="+d.expiry);
+    }
+  }catch(e){
+    let errMsg;
+    if(e.name==="AbortError")
+      errMsg="API timeout (>15s) — server too slow or offline";
+    else if(e.message.includes("Failed to fetch")||e.message.includes("NetworkError"))
+      errMsg="Cannot connect to "+API+" — is the server running? (python server.py)";
+    else
+      errMsg=e.message;
+    showGreeksErr(errMsg);
+    addLog("ERR","fetchGreeks: "+errMsg);
+    document.getElementById("lastUpdateGreeks").textContent="Failed "+new Date().toLocaleTimeString("en-IN",{hour12:false});
+  }
+  finally{isFetching=false;document.getElementById("spinner").style.display="none";}
+}
+
+function showGreeksErr(msg){
+  document.getElementById("greeksBody").innerHTML=
+    `<tr><td colspan="13" class="no-data" style="color:var(--red);font-size:12px;padding:20px">
+      ⚠ ${msg}<br>
+      <span style="font-size:10px;color:var(--tm);margin-top:6px;display:block">
+        Check: 1) Server running at ${API} &nbsp; 2) Access token valid &nbsp; 3) Internet connected
+      </span>
+    </td></tr>`;
+}
+
+function buildPills(expiries,active){
+  const today=new Date();today.setHours(0,0,0,0);
+  document.getElementById("epills").innerHTML=expiries.map(e=>{
+    const dte=Math.round((new Date(e)-today)/86400000);
+    return `<button class="epill ${e===active?"active":""}" onclick="selExpiry('${e}',this)">${e.slice(5)} <span style="font-size:9px;opacity:.7">${dte===0?"TODAY":dte+"D"}</span></button>`;
+  }).join("");
+}
+
+function selExpiry(e,el){
+  activeExpiry=e;
+  document.querySelectorAll(".epill").forEach(p=>p.classList.remove("active"));el.classList.add("active");
+  if(chainByExpiry[e]?.length){
+    chain=chainByExpiry[e];
+    const spot=parseFloat(document.getElementById("spotPrice")?.textContent?.replace(/,/g,""))||0;
+    const strikes=[...new Set(chain.map(r=>r.strike))].sort((a,b)=>a-b);
+    const atm=spot?strikes.reduce((p,c)=>Math.abs(c-spot)<Math.abs(p-spot)?c:p,strikes[0]):strikes[Math.floor(strikes.length/2)];
+    renderGreeks(chain,atm);
+  }else{fetchGreeksForExpiry(e);}
+}
+
+async function fetchGreeksForExpiry(expiry){
+  if(isExpFetching[expiry])return;
+  isExpFetching[expiry]=true;document.getElementById("spinner").style.display="";
+  try{
+    const ctrl=new AbortController();const _t=setTimeout(()=>ctrl.abort(),15000);
+    let r;
+    try{r=await fetch(`${API}/greeks?index=${IDX}&expiry=${expiry}&num_strikes=40`,{signal:ctrl.signal});}
+    finally{clearTimeout(_t);}
+    if(!r.ok){addLog("ERR",`fetchGreeksForExpiry(${expiry}): HTTP ${r.status}`);return;}
+    const d=await r.json();
+    if(d.status==="error"){addLog("ERR",`fetchGreeksForExpiry(${expiry}): ${d.error}`);return;}
+    if(d.chain?.length){
+      chainByExpiry[expiry]=d.chain;
+      addLog("INFO",`Expiry ${expiry}: ${d.chain.length} rows loaded`);
+      if(activeExpiry===expiry){chain=d.chain;renderGreeks(chain,d.atm_strike);}
+    }else{addLog("WARN",`fetchGreeksForExpiry(${expiry}): empty chain`);}
+  }catch(e){
+    addLog("ERR",`fetchGreeksForExpiry(${expiry}): `+(e.name==="AbortError"?"timeout":e.message));
+  }
+  finally{isExpFetching[expiry]=false;document.getElementById("spinner").style.display="none";}
+}
+
+function scaleTheta(v){return v;}
+
+function renderGreeks(data,atmStrike){
+  const by={};
+  data.forEach(r=>{if(!by[r.strike])by[r.strike]={};by[r.strike][r.type]=r;});
+  const strikes=Object.keys(by).map(Number).sort((a,b)=>a-b);
+  let html="";
+  strikes.forEach(s=>{
+    const ce=by[s].CE||{},pe=by[s].PE||{};
+    const isAtm=s===atmStrike;
+    const ceD=ce.delta??null,peD=pe.delta??null;
+    const ceElig=ceD!==null&&ceD>=-getLegDeltaMax()&&ceD<=getLegDeltaMax();
+    const peElig=peD!==null&&peD>=-getLegDeltaMax()&&peD<=getLegDeltaMax();
+    const fv4=v=>v!==null&&!isNaN(v)?(+v).toFixed(4):"—";
+    const atmLabel=isAtm?`<span class="atm-badge">ATM</span>`:"";
+    const bsButtons=`<span class="row-bs" style="display:none;gap:2px;margin-left:4px;flex-wrap:wrap;max-width:160px">
+      <button class="bs-btn b" onclick="addLegFromChain(${s},'CE','${activeExpiry||""}','BUY');event.stopPropagation()">B CE</button>
+      <button class="bs-btn s" onclick="addLegFromChain(${s},'CE','${activeExpiry||""}','SELL');event.stopPropagation()">S CE</button>
+      <button class="bs-btn b" onclick="addLegFromChain(${s},'PE','${activeExpiry||""}','BUY');event.stopPropagation()">B PE</button>
+      <button class="bs-btn s" onclick="addLegFromChain(${s},'PE','${activeExpiry||""}','SELL');event.stopPropagation()">S PE</button>
+    </span>`;
+    html+=`<tr class="${isAtm?"atm-row":""}"
+        onmouseenter="this.querySelector('.row-bs').style.display='inline-flex'"
+        onmouseleave="this.querySelector('.row-bs').style.display='none'">
+      <td class="ce">${fv4(ce.vega)}</td>
+      <td class="ce">${fv4(ce.gamma)}</td>
+      <td class="ce val-neg">${fv4(scaleTheta(ce.theta??null))}</td>
+      <td class="ce ${ceElig?"d-eligible":dCls(ceD)}">${fv4(ceD)}</td>
+      <td class="ce">${fv4(ce.iv_pct)}</td>
+      <td class="ce" style="font-weight:600;color:#1a2332;border-right:2px solid #c5d8f8">${ce.ltp!=null?(+ce.ltp).toFixed(2):"—"}</td>
+      <td class="sc"><div style="display:inline-flex;align-items:center;justify-content:center;gap:4px"><span style="font-weight:800;font-size:13px">${s}</span>${atmLabel}${bsButtons}</div></td>
+      <td class="pe" style="font-weight:600;color:#1a2332;border-left:2px solid #f5c0c0">${pe.ltp!=null?(+pe.ltp).toFixed(2):"—"}</td>
+      <td class="pe">${fv4(pe.iv_pct)}</td>
+      <td class="pe ${peElig?"d-eligible":dCls(peD)}">${fv4(peD)}</td>
+      <td class="pe val-neg">${fv4(scaleTheta(pe.theta??null))}</td>
+      <td class="pe">${fv4(pe.gamma)}</td>
+      <td class="pe">${fv4(pe.vega)}</td>
+    </tr>`;
+  });
+  document.getElementById("greeksBody").innerHTML=html||`<tr><td colspan="13" class="no-data">No data</td></tr>`;
+}
+function dCls(d){if(d===null||d===undefined)return"";return d>0.12?"val-pos":d<-0.12?"val-neg":"val-neu";}
+
+function refreshLegsFromChain(){
+  let changed=false;
+  legs.forEach((leg,i)=>{
+    if(!leg)return;
+    const fresh=(chainByExpiry[leg.expiry]||[]).find(r=>r.strike===leg.strike&&r.type===leg.type);
+    if(fresh){legs[i]={...leg,...fresh,expiry:leg.expiry,txnType:leg.txnType,lots:leg.lots};changed=true;}
+  });
+  if(changed){runGreeksCheck();updateSideLeg();updateSideCheck();}
+}
+
+// ══════════════════════════════════════════════
+//  LEG MANAGEMENT
+// ══════════════════════════════════════════════
+function addLegFromChain(strike,type,expiry,txnType){
+  txnType=txnType||"SELL";
+  if(legs.length>=4){toast("Maximum 4 legs allowed","warn");return;}
+  const expChain=chainByExpiry[expiry||activeExpiry]||chain||[];
+  const row=expChain.find(r=>r.strike===strike&&r.type===type);
+  if(!row){toast("Strike data not found","err");return;}
+  if(legs.find(l=>l&&l.strike===strike&&l.type===type&&l.expiry===(expiry||activeExpiry))){toast("Leg already added","warn");return;}
+  legs.push({...row,expiry:expiry||activeExpiry,txnType,entryDelta:row.delta,lots:1});
+  toast(`+ ${type} ${strike} added`,"ok");
+  addLog("INFO",`Leg added: ${type} ${strike} Δ${row.delta!=null?fvG(row.delta):"—"} ν${row.vega!=null?fvFull(row.vega):"—"}`);
+  renderLegCards();runGreeksCheck();updateSideLeg();updateSideCheck();updateVegaFlowUI();
+  unlockStep("trade");
+}
+
+function addLeg(){
+  if(legs.length>=4){toast("Maximum 4 legs allowed","warn");return;}
+  legs.push({symbol:"",strike:0,type:"CE",expiry:availableExpiries[0]||activeExpiry||"",txnType:"SELL",delta:0,ltp:0,lots:1,entryDelta:0});
+  renderLegCards();
+}
+
+function removeLeg(i){
+  legs.splice(i,1);
+  renderLegCards();runGreeksCheck();updateSideLeg();updateSideCheck();updateVegaFlowUI();
+  addLog("INFO",`Leg ${i+1} removed`);
+}
+
+function renderLegCards(){
+  const el=document.getElementById("legCards");
+  if(!legs.length){
+    el.innerHTML=`<div style="text-align:center;padding:20px;color:var(--tm);font-size:12px">No legs yet. Click <strong>+ Add Leg</strong> or use <strong>Auto-Fill</strong>.</div>`;
+    return;
+  }
+  el.innerHTML=legs.map((leg,i)=>{
+    const filled=leg&&leg.strike>0;
+    const isVegaLeg=i>=2;
+    const deltaOk=filled&&leg.delta!==undefined&&Math.abs(leg.delta)<=getLegDeltaMax();
+    const vegaOk=filled&&leg.vega!=null;
+    const cardOk=isVegaLeg?vegaOk:deltaOk;
+    const cardClass=filled?(cardOk?"filled":"failed"):"";
+    const signedVega=leg.vega!=null?(leg.type==="CE"?+Math.abs(leg.vega):-Math.abs(leg.vega)):null;
+    const selLabel=isVegaLeg?"Vega":"Delta";
+    const selColor=isVegaLeg?"var(--pur)":"var(--blue)";
+
+    const vegaRefBadge = isVegaLeg
+      ? `<span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;background:${i===2?"rgba(21,101,192,.1)":"rgba(211,47,47,.1)"};color:${i===2?"var(--blue)":"var(--red)"};border:1px solid ${i===2?"rgba(21,101,192,.2)":"rgba(211,47,47,.2)"};margin-left:4px">matches ${i===2?"Leg1 V1":"Leg2 V2"}</span>`
+      : (i===0
+          ? `<span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;background:rgba(21,101,192,.1);color:var(--blue);border:1px solid rgba(21,101,192,.2);margin-left:4px">→ V1 source</span>`
+          : `<span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;background:rgba(211,47,47,.1);color:var(--red);border:1px solid rgba(211,47,47,.2);margin-left:4px">→ V2 source</span>`);
+
+    const expList=[...new Set([...(leg.expiry?[leg.expiry]:[]),...availableExpiries])];
+    const expOpts=expList.map(e=>`<option value="${e}" ${leg.expiry===e?"selected":""}>${e}</option>`).join("");
+    const infoHtml=filled?(()=>{
+      if(isVegaLeg){
+        const vegaRef=i===2?legs[0]:legs[1];
+        const refVega=vegaRef?.vega!=null?Math.abs(vegaRef.vega):null;
+        const currAbsVega=leg.vega!=null?Math.abs(leg.vega):null;
+        const diff=refVega!=null&&currAbsVega!=null?Math.abs(currAbsVega-refVega):null;
+        const inTol=diff!=null&&diff<=CFG.sel.vega_tol;
+        return `<div class="lc-info ${vegaOk?"ok":"bad"}">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <span style="color:${leg.type==="CE"?"var(--grn)":"var(--red)"}">ν <strong>${signedVega!=null?(signedVega>=0?"+":"")+parseFloat(signedVega.toPrecision(10)):"—"}</strong></span>
+            <span style="color:var(--tm)">Δ <strong>${leg.delta!=null?fvFull(leg.delta):"—"}</strong></span>
+            <span>LTP <strong>₹${leg.ltp!=null?(+leg.ltp).toFixed(2):"—"}</strong></span>
+            <span>IV <strong>${leg.iv_pct?.toFixed(2)||"—"}%</strong></span>
+          </div>
+          ${refVega!=null?`<div style="margin-top:4px;font-size:9px;${inTol?"color:var(--grn)":"color:var(--gld)"}">
+            ${i===2?"V1":"V2"} ref = ${fvFull(refVega)} · diff = ${diff!=null?parseFloat(diff.toPrecision(10)):"—"} · T=${CFG.sel.vega_tol}
+            ${inTol?" ✓ within tolerance":"⚠ outside tolerance (fallback used)"}
+          </div>`:""}
+          <div style="margin-top:3px;font-size:9px;opacity:.85;color:var(--pur)">✓ Vega-matched from next week · T=${CFG.sel.vega_tol}</div>
+        </div>`;
+      } else {
+        return `<div class="lc-info ${deltaOk?"ok":"bad"}">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <span>Δ <strong>${leg.delta!=null?fvFull(leg.delta):"—"}</strong></span>
+            <span style="color:${leg.type==="CE"?"var(--grn)":"var(--red)"}">ν <strong>${signedVega!=null?(signedVega>=0?"+":"")+parseFloat(signedVega.toPrecision(10)):"—"}</strong></span>
+            <span>LTP <strong>₹${leg.ltp!=null?(+leg.ltp).toFixed(2):"—"}</strong></span>
+            <span>IV <strong>${leg.iv_pct?.toFixed(2)||"—"}%</strong></span>
+          </div>
+          <div style="margin-top:4px;font-size:9px;opacity:.85">${deltaOk?"✓ Delta in range":"✗ Delta outside ±"+getLegDeltaMax().toFixed(2)}</div>
+          <div style="margin-top:2px;font-size:9px;color:var(--pur)">Vega ${i===0?"V1":"V2"} = ${signedVega!=null?(signedVega>=0?"+":"")+parseFloat(signedVega.toPrecision(10)):"—"} → will be used to match Leg ${i===0?3:4}</div>
+        </div>`;
+      }
+    })():`<div class="lc-info">Select strike to see Greeks</div>`;
+    return `<div class="leg-card ${cardClass}">
+      <button class="remove-leg" onclick="removeLeg(${i})">✕</button>
+      <div class="lc-head">
+        <span class="lc-num">LEG ${i+1} <span style="font-size:8px;padding:1px 5px;border-radius:3px;background:${isVegaLeg?"var(--pur-l)":"var(--blue-l)"};color:${selColor};margin-left:3px;font-weight:700">${selLabel}</span>${vegaRefBadge}</span>
+        <span class="lc-action ${(leg.txnType||"SELL").toLowerCase()}">${leg.txnType||"SELL"}</span>
+      </div>
+      <div class="lc-row"><span class="lc-lbl">Action</span>
+        <select class="lc-sel" onchange="legs[${i}].txnType=this.value;renderLegCards();runGreeksCheck()">
+          <option ${leg.txnType==="SELL"?"selected":""} value="SELL">SELL</option>
+          <option ${leg.txnType==="BUY"?"selected":""} value="BUY">BUY</option>
+        </select>
+      </div>
+      <div class="lc-row"><span class="lc-lbl">Type</span>
+        <select class="lc-sel" onchange="legs[${i}].type=this.value;onLegFieldChange(${i})">
+          <option ${leg.type==="CE"?"selected":""} value="CE">CE</option>
+          <option ${leg.type==="PE"?"selected":""} value="PE">PE</option>
+        </select>
+      </div>
+      <div class="lc-row"><span class="lc-lbl">Strike</span>
+        <input class="lc-inp" type="number" value="${leg.strike||""}" step="${STEP}" onchange="legs[${i}].strike=parseFloat(this.value)||0;onLegFieldChange(${i})"/>
+      </div>
+      <div class="lc-row"><span class="lc-lbl">Expiry</span>
+        <select class="lc-sel" onchange="legs[${i}].expiry=this.value;onLegFieldChange(${i})">${expOpts}</select>
+      </div>
+      <div class="lc-row"><span class="lc-lbl">Lots</span>
+        <input class="lc-inp" type="number" value="${leg.lots||1}" min="1" max="100" onchange="legs[${i}].lots=parseInt(this.value)||1;renderLegCards();runGreeksCheck()" style="font-weight:700"/>
+      </div>
+      ${infoHtml}
+    </div>`;
+  }).join("");
+}
+
+function onLegFieldChange(i){
+  const leg=legs[i];if(!leg||!leg.strike||!leg.type||!leg.expiry)return;
+  const fresh=(chainByExpiry[leg.expiry]||[]).find(r=>r.strike===leg.strike&&r.type===leg.type);
+  if(fresh){legs[i]={...leg,...fresh,expiry:leg.expiry,txnType:leg.txnType,lots:leg.lots,entryDelta:fresh.delta};}
+  else{(async()=>{await fetchGreeksForExpiry(leg.expiry);const row=(chainByExpiry[leg.expiry]||[]).find(r=>r.strike===leg.strike&&r.type===leg.type);if(row)legs[i]={...legs[i],...row,expiry:leg.expiry,txnType:leg.txnType,lots:leg.lots,entryDelta:row.delta};renderLegCards();runGreeksCheck();updateSideLeg();updateSideCheck();updateVegaFlowUI();})();}
+  renderLegCards();runGreeksCheck();updateSideLeg();updateSideCheck();updateVegaFlowUI();
+}
+
+// ══════════════════════════════════════════════
+//  VEGA FLOW UI
+// ══════════════════════════════════════════════
+function updateVegaFlowUI(){
+  const box=document.getElementById("vegaFlowBox");if(!box)return;
+  const leg1=legs[0],leg2=legs[1],leg3=legs[2],leg4=legs[3];
+  if((!leg1||!leg1.strike)&&(!leg2||!leg2.strike)){box.style.display="none";updateSideVega();return;}
+  box.style.display="";
+  const setText=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const nextExp=availableExpiries[1]||availableExpiries[0]||"—";
+  setText("vfbNextExpiry",nextExp);
+  if(document.getElementById("vfbTolLabel")) document.getElementById("vfbTolLabel").textContent=CFG.sel.vega_tol;
+
+  if(leg1?.strike){
+    const v1=+Math.abs(leg1.vega||0);
+    setText("vfbLeg1Strike","Strike: "+leg1.strike);
+    const e=document.getElementById("vfbLeg1Vega");
+    if(e){e.textContent="+"+parseFloat(v1.toPrecision(10));e.className="vfc-vega pos";}
+    setText("vfbLeg1Meta","Δ "+sign(leg1.delta)+fvFull(leg1.delta)+" · "+leg1.expiry?.slice(5)+" · V1 = |ν|");
+  }
+  if(leg2?.strike){
+    const v2=+Math.abs(leg2.vega||0);
+    setText("vfbLeg2Strike","Strike: "+leg2.strike);
+    const e=document.getElementById("vfbLeg2Vega");
+    if(e){e.textContent="-"+parseFloat(v2.toPrecision(10));e.className="vfc-vega neg";}
+    setText("vfbLeg2Meta","Δ "+sign(leg2.delta)+fvFull(leg2.delta)+" · "+leg2.expiry?.slice(5)+" · V2 = |ν|");
+  }
+  if(leg3?.strike){
+    const v3=+Math.abs(leg3.vega||0);
+    const v1ref=leg1?.vega!=null?Math.abs(leg1.vega):null;
+    const diff=v1ref!=null?Math.abs(v3-v1ref):null;
+    setText("vfbLeg3Strike","Strike: "+leg3.strike);
+    const e=document.getElementById("vfbLeg3Vega");
+    if(e){e.textContent="+"+parseFloat(v3.toPrecision(10));e.className="vfc-vega pos";}
+    const de=document.getElementById("vfbLeg3Diff");
+    if(de&&diff!=null){
+      const inTol=diff<=CFG.sel.vega_tol;
+      de.textContent=diff<0.0001?"✓ Exact match":`|ν - V1| = ${parseFloat(diff.toPrecision(10))} ${inTol?"✓ in T":"⚠ fallback"}`;
+      de.className="vfc-diff "+(diff<0.01?"exact":inTol?"close":"far");
+    }
+    document.getElementById("vfbLeg3Card").className="vfb-card target"+(diff!=null&&diff<=CFG.sel.vega_tol?" found":"");
+  }else{
+    setText("vfbLeg3Strike","Searching next-week CE...");
+    const d=document.getElementById("vfbLeg3Diff");
+    if(d){d.textContent=leg1?.vega!=null?`target |ν| ≈ ${parseFloat(Math.abs(leg1.vega).toPrecision(10))} ± ${CFG.sel.vega_tol}`:"waiting for Leg 1";d.className="vfc-diff";}
+  }
+  if(leg4?.strike){
+    const v4=+Math.abs(leg4.vega||0);
+    const v2ref=leg2?.vega!=null?Math.abs(leg2.vega):null;
+    const diff=v2ref!=null?Math.abs(v4-v2ref):null;
+    setText("vfbLeg4Strike","Strike: "+leg4.strike);
+    const e=document.getElementById("vfbLeg4Vega");
+    if(e){e.textContent="-"+parseFloat(v4.toPrecision(10));e.className="vfc-vega neg";}
+    const de=document.getElementById("vfbLeg4Diff");
+    if(de&&diff!=null){
+      const inTol=diff<=CFG.sel.vega_tol;
+      de.textContent=diff<0.0001?"✓ Exact match":`|ν - V2| = ${parseFloat(diff.toPrecision(10))} ${inTol?"✓ in T":"⚠ fallback"}`;
+      de.className="vfc-diff "+(diff<0.01?"exact":inTol?"close":"far");
+    }
+    document.getElementById("vfbLeg4Card").className="vfb-card target"+(diff!=null&&diff<=CFG.sel.vega_tol?" found":"");
+  }else{
+    setText("vfbLeg4Strike","Searching next-week PE...");
+    const d=document.getElementById("vfbLeg4Diff");
+    if(d){d.textContent=leg2?.vega!=null?`target |ν| ≈ ${parseFloat(Math.abs(leg2.vega).toPrecision(10))} ± ${CFG.sel.vega_tol}`:"waiting for Leg 2";d.className="vfc-diff";}
+  }
+  updateSideVega();
+}
+
+function el(id){return document.getElementById(id);}
+
+// ══════════════════════════════════════════════
+//  SIDEBAR VEGA PANEL
+// ══════════════════════════════════════════════
+function updateSideVega(){
+  const panel=document.getElementById("sideVegaContent");if(!panel)return;
+  const leg1=legs[0],leg2=legs[1],leg3=legs[2],leg4=legs[3];
+  if((!leg1?.strike)&&(!leg2?.strike)){
+    panel.innerHTML=`<div style="font-size:11px;color:var(--tm)">Run Auto-Fill to see vega flow.</div>`;
+    return;
+  }
+  const v1=leg1?.vega!=null?Math.abs(leg1.vega):null;
+  const v2=leg2?.vega!=null?Math.abs(leg2.vega):null;
+  const nextExp=availableExpiries[1]||availableExpiries[0]||"—";
+  panel.innerHTML=`
+    <div style="font-size:9px;font-weight:800;color:var(--pur);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Vega Flow → Next Week (${nextExp.slice(5)||"—"})</div>
+    <div class="mon-greek-row">
+      <div><div class="mgr-label" style="color:var(--blue)">Leg 1 CE ν = V1</div><div class="mgr-range">→ Leg 3 CE BUY target</div></div>
+      <div class="mgr-value" style="color:var(--blue)">${v1!=null?"+"+parseFloat(v1.toPrecision(10)):"—"}</div>
+    </div>
+    ${leg3?.strike?`<div class="mon-greek-row" style="padding-left:10px;border-left:2px solid rgba(21,101,192,.3)">
+      <div><div class="mgr-label">Leg 3 CE ${leg3.strike}</div><div class="mgr-range">diff = ${v1!=null&&leg3.vega!=null?parseFloat(Math.abs(Math.abs(leg3.vega)-v1).toPrecision(10)):"—"} (T=${CFG.sel.vega_tol})</div></div>
+      <div class="mgr-value" style="color:var(--pur)">+${parseFloat(Math.abs(leg3.vega||0).toPrecision(10))}</div>
+    </div>`:""}
+    <div class="mon-greek-row" style="margin-top:4px">
+      <div><div class="mgr-label" style="color:var(--red)">Leg 2 PE ν = V2</div><div class="mgr-range">→ Leg 4 PE BUY target</div></div>
+      <div class="mgr-value" style="color:var(--red)">${v2!=null?"-"+parseFloat(v2.toPrecision(10)):"—"}</div>
+    </div>
+    ${leg4?.strike?`<div class="mon-greek-row" style="padding-left:10px;border-left:2px solid rgba(211,47,47,.3)">
+      <div><div class="mgr-label">Leg 4 PE ${leg4.strike}</div><div class="mgr-range">diff = ${v2!=null&&leg4.vega!=null?parseFloat(Math.abs(Math.abs(leg4.vega)-v2).toPrecision(10)):"—"} (T=${CFG.sel.vega_tol})</div></div>
+      <div class="mgr-value" style="color:var(--pur)">-${parseFloat(Math.abs(leg4.vega||0).toPrecision(10))}</div>
+    </div>`:""}`;
+}
+
+// ══════════════════════════════════════════════
+//  AUTO-FILL — selectByDelta + selectByVega
+// ══════════════════════════════════════════════
+
+/**
+ * selectByDelta
+ *
+ * Picks the strike whose delta is NUMERICALLY CLOSEST to targetDelta.
+ *
+ * For CE  (targetDelta = +0.20): compares actual delta values, e.g.
+ *   Δ0.18 vs Δ0.22 → picks whichever is nearer to +0.20
+ *
+ * For PE  (targetDelta = -0.20): PE deltas from backend are NEGATIVE
+ *   (e.g. -0.18, -0.22). We compare them directly to -0.20.
+ *   |(-0.18) - (-0.20)| = 0.02
+ *   |(-0.22) - (-0.20)| = 0.02  → tie → first one wins
+ *
+ * No pre-filtering, no boundary clipping — pure closest-number match.
+ */
+function selectByDelta(chain, optType, targetDelta) {
+  if (!chain?.length) return null;
+
+  const rows = chain.filter(r => r.type === optType && r.delta != null);
+  if (!rows.length) {
+    addLog("WARN", optType + ": 0 rows available in chain for selectByDelta");
+    return null;
+  }
+
+  addLog("INFO", optType + " candidates (" + rows.length + "): " +
+    rows.map(r => r.strike + "(Δ" + r.delta.toFixed(3) + ")").join(", "));
+
+  // ── Sign alignment: read actual PE delta sign from chain ──────────────────────
+  // Backend may return PE delta as POSITIVE (+0.18) even though convention is negative.
+  // Detect by checking the highest-|delta| PE row — if it’s positive, flip target sign.
+  let effectiveTarget = targetDelta;
+  if (optType === "PE") {
+    const sample = rows.reduce((a, b) => Math.abs(b.delta) > Math.abs(a.delta) ? b : a);
+    const backendSign = sample.delta >= 0 ? +1 : -1;
+    const targetSign  = targetDelta  >= 0 ? +1 : -1;
+    if (backendSign !== targetSign) {
+      effectiveTarget = -targetDelta;
+      addLog("WARN", "PE sign mismatch: backend=" + sample.delta.toFixed(4) +
+        " target=" + targetDelta + " → effectiveTarget=" + effectiveTarget.toFixed(4));
+    }
+  }
+
+  // ── Direction-constrained selection ───────────────────────────────────────────────
+  // CE: pick strike with delta <= effectiveTarget (do NOT exceed target from above)
+  //     e.g. target=+0.20 → only consider rows where delta <= 0.20, pick closest
+  // PE: pick strike with delta >= effectiveTarget (do NOT exceed target from below)
+  //     e.g. effectiveTarget=-0.20 (or +0.20 if backend positive) → closest without going past
+  let eligible;
+  if (optType === "CE") {
+    eligible = rows.filter(r => r.delta <= effectiveTarget);
+    if (!eligible.length) {
+      addLog("WARN", "CE: no rows with delta ≤ " + effectiveTarget + " — falling back to closest");
+      eligible = rows;
+    }
+  } else {
+    // PE: backend positive → effectiveTarget positive → want delta <= effectiveTarget (closest from below)
+    //     backend negative → effectiveTarget negative → want delta >= effectiveTarget (closest from above, i.e. less negative)
+    if (effectiveTarget >= 0) {
+      eligible = rows.filter(r => r.delta <= effectiveTarget);
+    } else {
+      eligible = rows.filter(r => r.delta >= effectiveTarget);
+    }
+    if (!eligible.length) {
+      addLog("WARN", "PE: no rows on correct side of " + effectiveTarget + " — falling back to closest");
+      eligible = rows;
+    }
+  }
+
+  const best = eligible.reduce((b, r) =>
+    Math.abs(r.delta - effectiveTarget) < Math.abs(b.delta - effectiveTarget) ? r : b
+  );
+
+  addLog("OK", optType + " → strike=" + best.strike +
+    " Δ=" + best.delta.toFixed(4) +
+    "  diff=" + (best.delta - effectiveTarget).toFixed(4) +
+    " (target=" + targetDelta + " effective=" + effectiveTarget.toFixed(4) + ")");
+  return best;
+}
+
+/**
+ * selectByVega
+ * From an option chain, find the strike whose |vega| is closest to targetAbsVega.
+ */
+function selectByVega(chain, optType, targetAbsVega) {
+  if (!chain?.length) return null;
+  const rows = chain.filter(r => r.type === optType && r.vega != null);
+  if (!rows.length) return null;
+  return rows.reduce((best, r) =>
+    Math.abs(Math.abs(r.vega) - targetAbsVega) < Math.abs(Math.abs(best.vega) - targetAbsVega) ? r : best
+  );
+}
+
+/**
+ * runStrategySelection
+ * Full 4-leg calendar spread selection.
+ */
+function runStrategySelection(currChain, nextChain, config = {}) {
+  const CE_TARGET = config.ce_delta ?? 0.20;
+  const PE_TARGET = config.pe_delta ?? -0.20;
+
+  const sellCE = selectByDelta(currChain, "CE", CE_TARGET);
+  const sellPE = selectByDelta(currChain, "PE", PE_TARGET);
+
+  if (!sellCE || !sellPE) return null;
+
+  const V1 = +Math.abs(sellCE.vega || 0);   // CE vega magnitude → +ve
+  const V2 = -Math.abs(sellPE.vega || 0);   // PE vega magnitude → shown as -ve
+
+  const buyCE = selectByVega(nextChain, "CE", V1);
+  const buyPE = selectByVega(nextChain, "PE", Math.abs(V2));
+
+  return { sell: { CE: sellCE, PE: sellPE }, buy: { CE: buyCE, PE: buyPE }, V1, V2 };
+}
+
+async function autoFill(){
+  const sortedExp = [...availableExpiries].sort((a,b) => new Date(a)-new Date(b));
+  const currExp   = activeExpiry || sortedExp[0];
+  const currIdx   = sortedExp.indexOf(currExp);
+  const nextExp   = sortedExp[currIdx + 1] || null;
+
+  if(!currExp){ toast("No expiry data — fetch Greeks first","warn"); return; }
+
+  // Always use the chain for currExp specifically — NOT the global `chain` variable,
+  // which reflects whichever expiry pill was last clicked and may be a different expiry.
+  const currChain = (chainByExpiry[currExp]?.length ? chainByExpiry[currExp] : null)
+                 || (chain?.length ? chain : []);
+  if(!currChain.length){ toast("No chain data — click Fetch Live Greeks first","err"); return; }
+
+  addLog("INFO", `AutoFill: currExp=${currExp} | ${currChain.length} rows in chain`);
+  addLog("INFO", "CE rows: "+currChain.filter(r=>r.type==="CE"&&r.delta!=null)
+    .map(r=>r.strike+"(Δ"+r.delta.toFixed(3)+")").join(", "));
+  addLog("INFO", "PE rows: "+currChain.filter(r=>r.type==="PE"&&r.delta!=null)
+    .map(r=>r.strike+"(Δ"+r.delta.toFixed(3)+")").join(", "));
+
+  let nextChain = nextExp ? (chainByExpiry[nextExp] || null) : null;
+  if(nextExp && !nextChain?.length){
+    try{
+      const ctrl=new AbortController(), _t=setTimeout(()=>ctrl.abort(),15000);
+      let r;
+      try{ r=await fetch(`${API}/greeks?index=${IDX}&expiry=${nextExp}&num_strikes=50`,{signal:ctrl.signal}); }
+      finally{ clearTimeout(_t); }
+      if(r?.ok){
+        const d=await r.json();
+        if(d.chain?.length){ nextChain=d.chain; chainByExpiry[nextExp]=d.chain;
+          addLog("INFO",`Next chain: ${d.chain.length} rows for ${nextExp}`);
+        }
+      }
+    }catch(e){ addLog("WARN","Next chain: "+e.message); }
+  }
+
+  const usedNextExp = nextChain?.length ? nextExp : currExp;
+  const finalNextChain = nextChain?.length ? nextChain : currChain;
+
+  const CE_T = CFG.sel?.ce_delta ?? 0.20;
+  const PE_T = CFG.sel?.pe_delta ?? -0.20;
+  const result = runStrategySelection(currChain, finalNextChain, { ce_delta:CE_T, pe_delta:PE_T });
+
+  if(!result){ toast("Could not select strikes — check chain data","err"); return; }
+
+  const { sell, buy, V1, V2 } = result;
+
+  const ceSelDiff = Math.abs(sell.CE.delta - CE_T);
+  const peSelDiff = Math.abs(sell.PE.delta - PE_T);
+  if(ceSelDiff > 0.08) addLog("WARN",`CE Δ=${sell.CE.delta.toFixed(4)} diff=${ceSelDiff.toFixed(3)} from +${CE_T}`);
+  if(peSelDiff > 0.08) addLog("WARN",`PE Δ=${sell.PE.delta.toFixed(4)} diff=${peSelDiff.toFixed(3)} from ${PE_T}`);
+
+  addLog("OK",`SELL CE${sell.CE.strike} Δ=${sell.CE.delta.toFixed(4)} V1=+${V1.toFixed(4)}`);
+  addLog("OK",`SELL PE${sell.PE.strike} Δ=${sell.PE.delta.toFixed(4)} V2=${V2.toFixed(4)}`);
+  addLog("OK",`BUY  CE${buy.CE?.strike||"?"} |ν|=${buy.CE?Math.abs(buy.CE.vega).toFixed(4):"—"} ≈ V1`);
+  addLog("OK",`BUY  PE${buy.PE?.strike||"?"} |ν|=${buy.PE?Math.abs(buy.PE.vega).toFixed(4):"—"} ≈ |V2|`);
+
+  legs=[];
+  legs.push({...sell.CE, expiry:currExp,    txnType:"SELL", entryDelta:sell.CE.delta, lots:1});
+  legs.push({...sell.PE, expiry:currExp,    txnType:"SELL", entryDelta:sell.PE.delta, lots:1});
+  if(buy.CE) legs.push({...buy.CE, expiry:usedNextExp, txnType:"BUY", entryDelta:buy.CE.delta, lots:1});
+  if(buy.PE) legs.push({...buy.PE, expiry:usedNextExp, txnType:"BUY", entryDelta:buy.PE.delta, lots:1});
+
+  updateVegaFlowUI();
+  renderLegCards(); runGreeksCheck(); updateSideLeg(); updateSideCheck();
+  unlockStep("trade"); goStep("trade");
+  toast(`✓ CE${sell.CE.strike} Δ${sell.CE.delta.toFixed(3)} | PE${sell.PE.strike} Δ${sell.PE.delta.toFixed(3)} | CE${buy.CE?.strike||"?"}BUY | PE${buy.PE?.strike||"?"}BUY`,"ok");
+}
+
+// ══════════════════════════════════════════════
+//  STEP 4: CHECK GREEKS
+// ══════════════════════════════════════════════
+function runGreeksCheck(){
+  const filled=legs.filter(l=>l&&l.strike>0&&l.delta!==undefined);
+  if(!filled.length){greeksCheckPassed=false;document.getElementById("proceedPlaceBtn")?.setAttribute("disabled","");updateCheckUI([],null);return;}
+  const {delta:net,theta,vega,gamma}=calcNetGreeks(filled);
+  const checks=[
+    {key:"delta",label:"Net Delta (Σ)", val:net,   min:CFG.pre.delta_min,max:CFG.pre.delta_max},
+    {key:"theta",label:"Net Theta (Σ)", val:theta, min:CFG.pre.theta_min,max:CFG.pre.theta_max},
+    {key:"vega", label:"Net Vega (Σ)",  val:vega,  min:CFG.pre.vega_min, max:CFG.pre.vega_max},
+    {key:"gamma",label:"Net Gamma (Σ)", val:gamma, min:CFG.pre.gamma_min,max:CFG.pre.gamma_max},
+  ];
+  greeksCheckPassed=checks.every(c=>c.val>=c.min&&c.val<=c.max);
+  const btn=document.getElementById("proceedPlaceBtn");
+  if(btn){if(greeksCheckPassed)btn.removeAttribute("disabled");else btn.setAttribute("disabled","");}
+  unlockStep("check");
+  if(greeksCheckPassed){unlockStep("place");addLog("OK",`Greeks PASSED Δ:${fvG(net)} θ:${fvG(theta)} ν:${fvG(vega)} Γ:${fvG(gamma)}`);}
+  updateCheckUI(checks,{net,theta,vega,gamma});updateSideCheck();
+}
+
+function updateCheckUI(checks,sums){
+  const alertsEl=document.getElementById("checkAlerts"),gridEl=document.getElementById("greekCheckGrid");
+  if(!checks.length){
+    alertsEl.innerHTML="";
+    gridEl.innerHTML="<div style='color:var(--tm);font-size:11px;grid-column:1/-1'>Add legs to validate Greeks.</div>";
+    ["ndValue","ndVerdict"].forEach(id=>{const e=document.getElementById(id);if(e){e.textContent=id==="ndValue"?"—":"Fill legs";e.className=id==="ndVerdict"?"nd-verdict idle":"";}});
+    return;
+  }
+  alertsEl.innerHTML=checks.filter(c=>c.val<c.min||c.val>c.max).map(c=>`
+    <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;padding:12px 14px;background:var(--red-l);border:1px solid rgba(211,47,47,.25);border-radius:7px">
+      <span style="font-size:18px;flex-shrink:0">⚠</span>
+      <div>
+        <div style="font-weight:800;font-size:13px;color:var(--red);margin-bottom:4px">${c.label} Out of Range</div>
+        <div style="font-size:11px;color:var(--ts);line-height:1.5">${PRE_ALERTS[c.key]}</div>
+        <div style="font-size:10px;color:var(--red);margin-top:4px;font-family:var(--mono)">Current: <strong>${fvG(c.val)}</strong> · Allowed: [${c.min}, ${c.max}]</div>
+      </div>
+    </div>`).join("");
+  gridEl.innerHTML=checks.map(c=>{
+    const ok=c.val>=c.min&&c.val<=c.max;
+    const color=ok?"var(--grn)":c.val<c.min*1.5||c.val>c.max*1.5?"var(--red)":"var(--gld)";
+    return `<div class="gc-item" style="border-color:${ok?"rgba(0,166,81,.2)":"rgba(211,47,47,.2)"}">
+      <div class="gc-label">${c.label}</div>
+      <div class="gc-value" style="color:${color}">${fvG(c.val)}</div>
+      <div class="gc-range">Allowed: [${c.min}, ${c.max}]</div>
+      <span class="gc-status ${ok?"ok":"fail"}">${ok?"✓ PASS":"✗ FAIL"}</span>
+    </div>`;
+  }).join("");
+  if(sums){
+    const f=n=>fvG(n),col=n=>n>=0?"var(--grn)":"var(--red)";
+    document.getElementById("sumGamma").textContent=f(sums.gamma);document.getElementById("sumGamma").style.color=col(sums.gamma);
+    document.getElementById("sumTheta").textContent=f(sums.theta);document.getElementById("sumTheta").style.color=col(sums.theta);
+    document.getElementById("sumVega").textContent=f(sums.vega);  document.getElementById("sumVega").style.color=col(sums.vega);
+    document.getElementById("sumDelta").textContent=f(sums.net);  document.getElementById("sumDelta").style.color=col(sums.net);
+  }
+  const net=sums?.net||0,ndOk=Math.abs(net)<=CFG.pre.delta_max;
+  document.getElementById("ndValue").textContent=fvG(net);
+  document.getElementById("ndValue").style.color=ndOk?"var(--grn)":"var(--red)";
+  const ndV=document.getElementById("ndVerdict");
+  ndV.className="nd-verdict "+(greeksCheckPassed?"ok":"bad");
+  ndV.textContent=greeksCheckPassed?"✓ ALL GREEKS PASS — Proceed to Place Order":"✗ Fix Greek ranges above";
+}
+
+function updateSideCheck(){
+  const filled=legs.filter(l=>l&&l.strike>0&&l.delta!==undefined),panel=document.getElementById("sideCheckContent");
+  if(!filled.length){panel.innerHTML=`<div style="font-size:11px;color:var(--tm)">Add legs to validate.</div>`;return;}
+  const {delta:net,theta,vega,gamma}=calcNetGreeks(filled);
+  function row(key,label,val,min,max){
+    const ok=val>=min&&val<=max,color=ok?"var(--grn)":"var(--red)";
+    return `<div class="mon-greek-row"><div><div class="mgr-label">${label}</div><div class="mgr-range">[${min}, ${max}]</div>${!ok?`<div style="font-size:8px;color:var(--red);line-height:1.3;margin-top:2px">${PRE_ALERTS[key]}</div>`:""}</div><div style="text-align:right"><div class="mgr-value" style="color:${color}">${fvG(val)}</div><span class="mgr-status ${ok?"ok":"fail"}">${ok?"✓":"✗"}</span></div></div>`;
+  }
+  panel.innerHTML=row("delta","Net Delta",net,CFG.pre.delta_min,CFG.pre.delta_max)+row("theta","Net Theta",theta,CFG.pre.theta_min,CFG.pre.theta_max)+row("vega","Net Vega",vega,CFG.pre.vega_min,CFG.pre.vega_max)+row("gamma","Net Gamma",gamma,CFG.pre.gamma_min,CFG.pre.gamma_max);
+  const sb=document.getElementById("spnum-check");if(sb){sb.textContent=greeksCheckPassed?"✓":"4";sb.style.background=greeksCheckPassed?"var(--grn)":"";}
+}
+
+function updateSideLeg(){
+  const filled=legs.filter(l=>l&&l.strike>0),panel=document.getElementById("sideLegSummary");
+  if(!filled.length){panel.innerHTML=`<div style="font-size:11px;color:var(--tm)">No legs.</div>`;return;}
+  panel.innerHTML=filled.map((l,i)=>{
+    const ok=l.delta!==undefined&&Math.abs(l.delta)<=getLegDeltaMax();
+    const sv=l.vega!=null?(l.type==="CE"?+Math.abs(l.vega):-Math.abs(l.vega)):null;
+    const isVegaLeg=i>=2;
+    const refLabel=i===0?"V1→L3":i===1?"V2→L4":i===2?"≈V1":i===3?"≈V2":"";
+    return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:11px">
+      <div>
+        <span class="badge-pill ${l.type==="CE"?"blue":"red"}" style="margin-right:4px">${l.type}</span>
+        <span style="font-weight:700">${l.strike}</span>
+        <span style="color:var(--tm);font-size:9px"> ${l.expiry?.slice(5)||""}</span>
+        ${refLabel?`<span style="font-size:8px;color:var(--pur);font-weight:700;margin-left:3px">${refLabel}</span>`:""}
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:700;color:${ok?"var(--grn)":"var(--red)"};font-family:var(--mono);font-size:11px">${l.delta!=null?fvG(l.delta):"—"}</div>
+        <div style="font-size:9px;color:var(--pur)">ν${sv!=null?fvG(sv):"—"}</div>
+        <div style="font-size:9px;color:${l.txnType==="BUY"?"var(--grn)":"var(--red)"}">${l.txnType}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ══════════════════════════════════════════════
+//  PLACE ORDERS
+// ══════════════════════════════════════════════
+function refreshOrderGrid(){
+  const gl=parseInt(document.getElementById("lotsInput")?.value)||1;
+  document.getElementById("lotInfo").textContent=`Base Lot:${LOT}`;
+  document.getElementById("orderGrid").innerHTML=legs.map((leg,i)=>{
+    const ll=leg?.lots||gl,qty=ll*LOT,ac=leg?.txnType||"SELL";
+    return `<div class="oleg s${i}"><div class="oleg-lbl" style="color:${ac==="BUY"?"var(--grn)":"var(--red)"}">Leg ${i+1} — ${ac}</div>${leg&&leg.strike?`<div class="oleg-sym">${leg.symbol||leg.type+" "+leg.strike}</div><div class="oleg-meta">${leg.type} ${leg.strike} · Δ${leg.delta!=null?fvG(leg.delta):"—"} · ₹${leg.ltp?.toFixed(2)||"—"} · ${ll} lot${ll>1?"s":""} · Qty:${qty}</div>`:`<div class="oleg-sym" style="color:var(--tm)">—</div>`}</div>`;
+  }).join("");
+  refreshAmountRequired();
+}
+
+const SPAN_RATES = {
+  NIFTY:0.1375, BANKNIFTY:0.1375, FINNIFTY:0.1375, MIDCPNIFTY:0.1375, SENSEX:0.1375,
+};
+function spanMargin(leg, qty){
+  let rate=0.1375;
+  const sym=(leg.symbol||"").toUpperCase();
+  for(const [idx,r] of Object.entries(SPAN_RATES)){if(sym.startsWith(idx)){rate=r;break;}}
+  const strike=leg.strike||0, ltp=leg.ltp||0;
+  return strike>0 ? strike*qty*rate : ltp*qty*5;
+}
+
+async function refreshAmountRequired(){
+  const gl=parseInt(document.getElementById("lotsInput")?.value)||1;
+  const prod=document.getElementById("prodSelect")?.value||"NRML";
+  const filled=legs.filter(l=>l&&l.strike>0&&l.ltp!=null);
+  if(document.getElementById("amtLotSize")) document.getElementById("amtLotSize").textContent=LOT;
+  if(!filled.length){
+    ["amtBuyTotal","amtSellTotal","amtNetTotal"].forEach(id=>{document.getElementById(id).textContent="₹ —";});
+    document.getElementById("amountLegsBreakdown").innerHTML="<div style='font-size:11px;color:var(--tm)'>Add legs to see capital required.</div>";
+    return;
+  }
+  document.getElementById("amountLegsBreakdown").innerHTML=filled.map((leg,i)=>{
+    const ll=leg.lots||gl,qty=ll*LOT,ltp=leg.ltp||0,ac=leg.txnType||"SELL";
+    return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:4px 0;border-bottom:1px solid rgba(255,152,0,.1)">
+      <span style="color:var(--tp)">${ac==="BUY"?"🟢":"🔴"} Leg ${i+1} <b>${leg.type||""} ${leg.strike||""}</b> <span style="color:var(--tm);font-size:9px">${ll}L × ${qty}qty @ ₹${ltp.toFixed(2)}</span></span>
+      <span id="amtVal${i}" style="font-weight:700;color:${ac==="BUY"?"var(--grn)":"var(--red)"}"><span style="color:var(--tm);font-size:10px">…</span></span>
+    </div>`;
+  }).join("");
+  document.getElementById("amtBuyTotal").textContent="…";
+  document.getElementById("amtSellTotal").textContent="…";
+  document.getElementById("amtNetTotal").textContent="…";
+
+  let buyTotal=0;
+  filled.forEach((leg,i)=>{
+    if((leg.txnType||"SELL")==="BUY"){
+      const amt=(leg.ltp||0)*(leg.lots||gl)*LOT;
+      buyTotal+=amt;
+      const e=document.getElementById("amtVal"+i);
+      if(e) e.innerHTML=`₹${fmt2(amt)} <span style="font-size:9px;color:var(--tm)">Premium</span>`;
+    }
+  });
+
+  let sellTotal=0;
+  const sellLegs=filled.filter(l=>(l.txnType||"SELL")==="SELL");
+
+  if(paperMode){
+    sellLegs.forEach(leg=>{
+      const qty=(leg.lots||gl)*LOT, margin=spanMargin(leg,qty);
+      sellTotal+=margin;
+      const gi=filled.indexOf(leg);
+      const e=document.getElementById("amtVal"+gi);
+      if(e) e.innerHTML=`₹${fmt2(margin)} <span style="font-size:9px;color:var(--tm);opacity:.7">~SPAN est</span>`;
+    });
+    updateMarginTotals(buyTotal,sellTotal,"paper");
+  } else {
+    const spanEstimates={};
+    sellLegs.forEach(leg=>{
+      const qty=(leg.lots||gl)*LOT;
+      spanEstimates[filled.indexOf(leg)]=spanMargin(leg,qty);
+      sellTotal+=spanEstimates[filled.indexOf(leg)];
+      const gi=filled.indexOf(leg);
+      const e=document.getElementById("amtVal"+gi);
+      if(e) e.innerHTML=`₹${fmt2(spanEstimates[gi])} <span style="font-size:9px;color:var(--tm)">fetching…</span>`;
+    });
+    updateMarginTotals(buyTotal,sellTotal,"fetching");
+    let liveTotal=0,anyFailed=false;
+    try{
+      await Promise.all(sellLegs.map(async(leg)=>{
+        const qty=(leg.lots||gl)*LOT, gi=filled.indexOf(leg);
+        try{
+          const r=await fetch(`${API}/check-margin`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({legs:[{symbol:leg.symbol||(leg.type+leg.strike),transaction_type:"SELL",quantity:qty,strike:leg.strike||0,ltp:leg.ltp||0}],product:prod}),signal:AbortSignal.timeout(6000)});
+          if(!r.ok) throw new Error("HTTP "+r.status);
+          const d=await r.json();
+          if(d.status!=="success") throw new Error(d.error||"API error");
+          liveTotal+=d.required_margin;
+          const e=document.getElementById("amtVal"+gi);
+          if(e) e.innerHTML=`₹${fmt2(d.required_margin)} <span style="font-size:9px;color:var(--tm)">Margin ✓</span>`;
+        }catch(e){
+          liveTotal+=spanEstimates[gi]||0; anyFailed=true;
+          const ep=document.getElementById("amtVal"+gi);
+          if(ep) ep.innerHTML=`₹${fmt2(spanEstimates[gi]||0)} <span style="font-size:9px;color:var(--tm)">~SPAN est</span>`;
+        }
+      }));
+    }catch(e){}
+    updateMarginTotals(buyTotal,liveTotal,anyFailed?"partial":"live");
+  }
+}
+
+function updateMarginTotals(buyTotal,sellTotal,src){
+  const net=buyTotal+sellTotal;
+  document.getElementById("amtBuyTotal").textContent=buyTotal?"₹"+fmt2(buyTotal):"₹ 0";
+  document.getElementById("amtSellTotal").textContent=sellTotal?"₹"+fmt2(sellTotal):"₹ 0";
+  const netEl=document.getElementById("amtNetTotal");
+  netEl.textContent="₹"+fmt2(net);
+  const colors={"paper":"#607d8b","live":"var(--orange,#e65100)","partial":"#f57c00","fetching":"#999"};
+  const labels={"paper":"SPAN estimate (paper mode)","live":"Zerodha exact margin","partial":"Mix: Zerodha + SPAN fallback","fetching":"Calculating…"};
+  netEl.style.color=colors[src]||"#999";
+  const lbl=document.getElementById("marginSourceLabel");
+  if(lbl){lbl.textContent=labels[src]||"SPAN estimate";}
+}
+
+function fmt2(n){ return n==null||isNaN(n)?"—":n.toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+async function doPaperTrade(){
+  const gl=parseInt(document.getElementById("lotsInput")?.value)||1;
+  const filled=legs.filter(l=>l&&l.strike>0);
+  if(filled.length<2){toast("Add at least 2 legs","err");return;}
+  const prodRaw=document.getElementById("prodSelect")?.value||"NRML";
+  const prodLabel=prodRaw==="MIS"?"MIS (Intraday)":"CNC (Carry Forward)";
+  const now=new Date();
+  filled.forEach(l=>{
+    const ll=l.lots||gl, qty=ll*LOT;
+    placedLegs.push({symbol:l.symbol||`${l.type}${l.strike}`,type:l.type||"",strike:l.strike||0,qty,entryDelta:l.delta||0,delta:l.delta||0,ltp:l.ltp||0,entryPrice:l.ltp||0,expiry:l.expiry||"",txnType:l.txnType||"SELL",product:prodRaw,productLabel:prodLabel,theta:l.theta||0,vega:l.vega||0,gamma:l.gamma||0,paperTrade:true});
+  });
+  let buyAmt=0,sellAmt=0;
+  filled.forEach(l=>{const qty=(l.lots||gl)*LOT;if((l.txnType||"SELL")==="BUY") buyAmt+=(l.ltp||0)*qty;else sellAmt+=spanMargin(l,qty);});
+  const totalCap=buyAmt+sellAmt;
+  const backendLegs=filled.map(l=>({symbol:l.symbol,transaction_type:l.txnType||"SELL",quantity:(l.lots||gl)*LOT,ltp:l.ltp||0,strike:l.strike||0,expiry:l.expiry||""}));
+  // ── PAPER TRADE: call /paper/place-legs — NEVER /place-legs (Zerodha real orders) ──
+  fetch(`${API}/paper/place-legs`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({legs:backendLegs,product:prodRaw}),signal:AbortSignal.timeout(5000)})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.status==="success"||d.status==="partial"){
+        addLog("OK","📋 Paper backend: "+d.placed+" leg(s) recorded | balance ₹"+(d.virtual_balance!=null?fmt2(d.virtual_balance):"—"));
+      } else {
+        addLog("WARN","📋 Paper backend responded: "+(d.status||"unknown")+" — "+(d.error||""));
+      }
+    })
+    .catch(()=>addLog("WARN","📋 Paper backend sync skipped (server offline — local-only mode)"));
+  const entry={timestamp:now.toISOString(),date:now.toLocaleDateString("en-IN"),type:"PAPER",product:prodLabel,legs:filled.map(l=>({symbol:l.symbol,txnType:l.txnType||"SELL",lots:l.lots||gl,qty:(l.lots||gl)*LOT,entryPrice:l.ltp||0})),capitalRequired:totalCap,buyPremium:buyAmt,sellMargin:sellAmt};
+  tradeHistory.unshift(entry);saveTradeHistory();savePlacedLegs();renderMonitorCards();updateSideMon();unlockStep("monitor");
+  toast(`📋 Paper Trade placed (${prodLabel}) | Capital ~₹${fmt2(totalCap)}`,"ok");
+  addLog("OK",`PAPER TRADE [${prodLabel}]: ${filled.length} legs | BUY ₹${fmt2(buyAmt)} + SELL ~₹${fmt2(sellAmt)} = ₹${fmt2(totalCap)}`);
+  goStep("monitor");
+  if(!monActive)toggleMonitor();
+}
+
+async function initPlaceOrders(){
+  const filled=legs.filter(l=>l&&l.strike>0);
+  if(filled.length<2){toast("Add at least 2 legs","err");return;}
+  if(!greeksCheckPassed){addLog("WARN","Placing orders with Greeks check NOT passed");toast("⚠ Greeks not checked — placing anyway","warn");}
+  const gl=parseInt(document.getElementById("lotsInput")?.value)||1;
+  const prodRaw=document.getElementById("prodSelect")?.value||"NRML";
+  const prodLabel=prodRaw==="MIS"?"MIS (Intraday)":"CNC (Carry Forward)";
+  const payload=filled.map(l=>({symbol:l.symbol,transaction_type:l.txnType||"SELL",quantity:(l.lots||gl)*LOT,ltp:l.ltp||0,strike:l.strike||0,expiry:l.expiry||""}));
+  const btn=document.getElementById("placeOrderBtn");
+  btn.disabled=true;btn.textContent="⏳ Placing...";
+  addLog("INFO",`Placing ${payload.length} orders [${prodLabel}]`);
+  try{
+    const r=await fetch(`${API}/place-legs`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({legs:payload,product:prodRaw})});
+    let d;try{d=await r.json();}catch(e){d=null;}
+    if(!r.ok){toast("❌ "+(d?.detail||"HTTP "+r.status),"err");addLog("ERR","Place failed: "+(d?.detail||r.status));return;}
+    let ok=0;
+    (d.results||[]).forEach(res=>{
+      if(res.status==="success"||res.status==="pending"){
+        ok++;
+        const src=filled.find(l=>l.symbol===res.symbol)||{};
+        const pLeg=payload.find(p=>p.symbol===res.symbol)||{};
+        const entryLtp=res.ltp||pLeg.ltp||src.ltp||0;
+        const entryStrike=res.strike||pLeg.strike||src.strike||0;
+        placedLegs.push({symbol:res.symbol,type:src.type||"",strike:entryStrike,qty:pLeg.quantity||0,entryDelta:src.delta||0,delta:src.delta||0,ltp:entryLtp,entryPrice:entryLtp,expiry:pLeg.expiry||src.expiry||"",txnType:pLeg.transaction_type||"SELL",product:prodRaw,productLabel:prodLabel,theta:src.theta||0,vega:src.vega||0,gamma:src.gamma||0,paperTrade:false,order_id:res.order_id||null});
+      }else{toast(`❌ ${res.symbol}: ${res.message||"failed"}`,"err");}
+    });
+    if(ok>0){
+      toast(`✓ ${ok} legs placed [${prodLabel}]`,"ok");
+      addLog("OK",`${ok} orders placed [${prodLabel}]`);
+      const now=new Date();
+      tradeHistory.unshift({timestamp:now.toISOString(),date:now.toLocaleDateString("en-IN"),type:"REAL",product:prodLabel,legs:filled.map(l=>({symbol:l.symbol,txnType:l.txnType||"SELL",lots:l.lots||gl,qty:(l.lots||gl)*LOT,entryPrice:l.ltp||0}))});
+      saveTradeHistory();savePlacedLegs();renderMonitorCards();updateSideMon();
+      unlockStep("monitor");goStep("monitor");
+      if(!monActive)toggleMonitor();
+    } else { toast("❌ All orders failed","err"); }
+  }catch(e){toast("❌ "+e.message,"err");addLog("ERR","Place exception: "+e.message);}
+  finally{btn.disabled=false;btn.textContent="⚡ PLACE ALL LEGS";}
+}
+
+// ══════════════════════════════════════════════
+//  MONITOR
+// ══════════════════════════════════════════════
+function toggleMonitor(){
+  monActive=!monActive;
+  const tog=document.getElementById("monToggle"),tim=document.getElementById("monTimerRow");
+  if(monActive){
+    tog.className="mon-toggle on";tog.innerHTML='<div class="mdot g"></div> MONITORING LIVE';
+    tim.style.display="";timerSec=1;checkDelta();
+    monInterval=setInterval(()=>{timerSec--;document.getElementById("timerCount").textContent=timerSec;if(timerSec<=0){timerSec=1;checkDelta();}},1000);
+    addLog("INFO","Monitoring started");
+  } else {
+    tog.className="mon-toggle";tog.innerHTML='<div class="mdot y"></div> START MONITORING';
+    tim.style.display="none";clearInterval(monInterval);monInterval=null;
+    addLog("INFO","Monitoring stopped");
+  }
+}
+
+async function checkDelta(){
+  if(!placedLegs.length||monFetching)return;
+  monFetching=true;document.getElementById("timerCount").textContent="…";
+  try{
+    const expiries=[...new Set(placedLegs.map(l=>l.expiry||activeExpiry).filter(Boolean))];
+    await Promise.all(expiries.map(async exp=>{
+      try{
+        const r=await fetch(`${API}/greeks?index=${IDX}&expiry=${exp}&num_strikes=40`);
+        if(!r.ok)return;
+        const d=await r.json();
+        if(d?.chain?.length) chainByExpiry[exp]=d.chain;
+      }catch(e){}
+    }));
+    placedLegs=placedLegs.map(leg=>{
+      const expChain=chainByExpiry[leg.expiry||activeExpiry]||[];
+      const fresh=expChain.find(g=>g.symbol===leg.symbol)||expChain.find(g=>g.strike===leg.strike&&g.type===leg.type);
+      if(fresh) return {...leg,delta:fresh.delta,ltp:fresh.ltp,theta:fresh.theta,vega:fresh.vega,gamma:fresh.gamma,iv_pct:fresh.iv_pct};
+      return leg;
+    });
+    renderMonitorCards();checkPnLAlerts();checkGreekMonitorAlerts();
+  }catch(e){}
+  finally{monFetching=false;}
+}
+
+const _greekBreachState = {delta:false, theta:false, vega:false, gamma:false};
+const _greekAlertTs     = {delta:0,     theta:0,     vega:0,     gamma:0};
+let   _alertHistory = [];
+
+function _playAlertBeep(){
+  try{
+    const ac=new(window.AudioContext||window.webkitAudioContext)();
+    [660,550,660].forEach((freq,i)=>{
+      const o=ac.createOscillator(),g=ac.createGain();
+      o.connect(g);g.connect(ac.destination);
+      o.frequency.value=freq;o.type="square";
+      g.gain.setValueAtTime(0,ac.currentTime+i*.12);
+      g.gain.linearRampToValueAtTime(.18,ac.currentTime+i*.12+.04);
+      g.gain.linearRampToValueAtTime(0,ac.currentTime+i*.12+.1);
+      o.start(ac.currentTime+i*.12);o.stop(ac.currentTime+i*.12+.12);
+    });
+  }catch(e){}
+}
+
+function _addAlertHistoryEntry(entry){
+  _alertHistory.unshift(entry);
+  if(_alertHistory.length>50) _alertHistory.pop();
+  _renderAlertHistory();
+}
+
+function _renderAlertHistory(){
+  const list=document.getElementById("alertHistoryList");
+  const sec=document.getElementById("alertHistorySection");
+  const cnt=document.getElementById("alertHistoryCount");
+  if(!list||!sec) return;
+  if(!_alertHistory.length){sec.style.display="none";return;}
+  sec.style.display="";
+  if(cnt) cnt.textContent=_alertHistory.length+" alert"+ (_alertHistory.length!==1?"s":"");
+  list.innerHTML=_alertHistory.map(e=>{
+    const ts=new Date(e.ts).toLocaleTimeString("en-IN",{hour12:false});
+    const isBreach=e.type==="breach";
+    return `<div class="ahl-row">
+      <span class="ahl-ts">${ts}</span>
+      <span class="ahl-greek ${isBreach?"breach":"ok"}">${isBreach?"🚨":"✅"} ${e.label}</span>
+      <span class="ahl-text">${isBreach?"BREACH":"RESOLVED"} — value <b>${fvG(e.val)}</b> · range [${e.min}, ${e.max}]</span>
+    </div>`;
+  }).join("");
+}
+
+function clearAlertHistory(){
+  _alertHistory=[];
+  Object.keys(_greekBreachState).forEach(k=>_greekBreachState[k]=false);
+  _renderAlertHistory();
+  _updateAlertBanners({delta:false,theta:false,vega:false,gamma:false},{delta:0,theta:0,vega:0,gamma:0});
+}
+
+function _updateAlertBanners(breachMap, valMap){
+  const wrap=document.getElementById("alertBannersWrap");
+  const inner=document.getElementById("alertBannersInner");
+  if(!wrap||!inner) return;
+  const GREEK_META={
+    delta:{icon:"Δ",label:"Net Delta",  emoji:"📐",unit:""},
+    theta:{icon:"θ",label:"Net Theta",  emoji:"⏱", unit:""},
+    vega: {icon:"ν",label:"Net Vega",   emoji:"🌊",unit:""},
+    gamma:{icon:"Γ",label:"Net Gamma",  emoji:"⚡",unit:""},
+  };
+  const anyBreach=Object.values(breachMap).some(Boolean);
+  wrap.style.display=anyBreach?"":"none";
+  if(!anyBreach){inner.innerHTML="";return;}
+  inner.innerHTML=Object.keys(breachMap).filter(k=>breachMap[k]).map(k=>{
+    const m=GREEK_META[k];
+    const min=CFG.mon[k+"_min"], max=CFG.mon[k+"_max"];
+    const val=valMap[k];
+    return `<div class="alert-banner active">
+      <div class="ab-icon">${m.emoji}</div>
+      <div class="ab-body">
+        <div class="ab-title active">🚨 ${m.label} (${m.icon}) — OUT OF ALLOWED RANGE</div>
+        <div style="margin:6px 0;padding:8px 12px;background:rgba(211,47,47,.08);border-left:3px solid var(--red);border-radius:0 6px 6px 0;font-size:12px;font-weight:700;color:var(--red);line-height:1.5">${MON_ALERTS[k]}</div>
+        <div class="ab-meta" style="display:flex;gap:16px;flex-wrap:wrap">
+          <span>Current: <b style="color:var(--red);font-size:13px">${fvG(val)}</b></span>
+          <span>Allowed Range: <b style="color:var(--grn)">[${min} to ${max}]</b></span>
+          <span style="color:var(--tl)">${new Date().toLocaleTimeString("en-IN")}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function _updateLiveGreekDash(net, theta, vega, gamma){
+  const dash=document.getElementById("greeksLiveDash");
+  if(dash) dash.style.display="";
+  const ts=document.getElementById("liveGreeksTs");
+  if(ts) ts.textContent="Updated "+new Date().toLocaleTimeString("en-IN",{hour12:false});
+  const data={
+    delta:{val:net,   min:CFG.mon.delta_min, max:CFG.mon.delta_max},
+    theta:{val:theta, min:CFG.mon.theta_min, max:CFG.mon.theta_max},
+    vega: {val:vega,  min:CFG.mon.vega_min,  max:CFG.mon.vega_max},
+    gamma:{val:gamma, min:CFG.mon.gamma_min, max:CFG.mon.gamma_max},
+  };
+  Object.entries(data).forEach(([key,{val,min,max}])=>{
+    const ok=val>=min&&val<=max;
+    const card=document.getElementById("lgCard_"+key);
+    const valEl=document.getElementById("lgVal_"+key);
+    const rangeEl=document.getElementById("lgRange_"+key);
+    const barEl=document.getElementById("lgBar_"+key);
+    const statusEl=document.getElementById("lgStatus_"+key);
+    if(!card) return;
+    card.className="live-greek-card "+(ok?"safe":"breach");
+    if(valEl){valEl.textContent=fvG(val);valEl.className="lgc-value "+(ok?"safe":"breach");}
+    if(rangeEl) rangeEl.textContent="Range: ["+min+", "+max+"]";
+    if(statusEl){statusEl.textContent=ok?"✓ IN RANGE":"✗ BREACHED";statusEl.className="lgc-status "+(ok?"ok":"breach");}
+    if(barEl){
+      const span=max-min;
+      const pct=span>0?Math.min(100,Math.max(0,((val-min)/span)*100)):50;
+      barEl.style.left="0";barEl.style.width=pct+"%";barEl.style.background=ok?"var(--grn)":"var(--red)";
+    }
+  });
+}
+
+function checkGreekMonitorAlerts(){
+  if(!placedLegs.length)return;
+  const {delta:net,theta,vega,gamma}=calcNetGreeks(placedLegs);
+  const now=Date.now();
+  const COOLDOWN=30000;
+  const checks=[
+    {key:"delta", label:"Net Delta (Δ)", val:net,   min:CFG.mon.delta_min, max:CFG.mon.delta_max},
+    {key:"theta", label:"Net Theta (θ)", val:theta, min:CFG.mon.theta_min, max:CFG.mon.theta_max},
+    {key:"vega",  label:"Net Vega (ν)",  val:vega,  min:CFG.mon.vega_min,  max:CFG.mon.vega_max},
+    {key:"gamma", label:"Net Gamma (Γ)", val:gamma, min:CFG.mon.gamma_min, max:CFG.mon.gamma_max},
+  ];
+  const breachMap={delta:false,theta:false,vega:false,gamma:false};
+  const valMap={delta:net,theta,vega,gamma};
+  let anyNewBreach=false;
+  checks.forEach(({key,label,val,min,max})=>{
+    const inRange=val>=min&&val<=max;
+    const wasBreach=_greekBreachState[key];
+    if(!inRange){
+      breachMap[key]=true;
+      if(!wasBreach){
+        _greekBreachState[key]=true;anyNewBreach=true;
+        _addAlertHistoryEntry({ts:now,greek:key,label,val,min,max,type:"breach"});
+        addLog("WARN",`⚠ ${label} OUT OF RANGE: ${fvG(val)} | [${min} to ${max}]`);
+        const waMsg=`🚨 *GREEK ALERT — ${IDX}*\n━━━━━━━━━━━━━━━━━━━━\n📌 *${label}* is OUT OF RANGE\n\n⚠ ${MON_ALERTS[key]}\n\n📊 Current Value: *${fvG(val)}*\n✅ Allowed Range: [${min} to ${max}]\n⏱ Time: ${new Date().toLocaleTimeString("en-IN")}\n━━━━━━━━━━━━━━━━━━━━\n👉 Please adjust or exit the trade immediately.`;
+        sendWaAlert("warn", waMsg);
+      }
+      if(now-_greekAlertTs[key]>COOLDOWN){
+        _greekAlertTs[key]=now;
+        _showGreekAlertModal(label, MON_ALERTS[key], val, min, max);
+        toast(`🚨 ${MON_ALERTS[key]}`,"err");
+      }
+    } else {
+      if(wasBreach){
+        _greekBreachState[key]=false;
+        _addAlertHistoryEntry({ts:now,greek:key,label,val,min,max,type:"resolved"});
+        addLog("OK",`✅ ${label} BACK IN RANGE: ${fvG(val)} [${min} to ${max}]`);
+        toast(`✅ ${label} restored — back in safe range`,"ok");
+        sendWaAlert("ok",`✅ *RESOLVED — ${IDX}*\n━━━━━━━━━━━━━━━━━━━━\n📌 *${label}* is back in range\n\n📊 Current Value: *${fvG(val)}*\n✅ Allowed Range: [${min} to ${max}]\n⏱ Time: ${new Date().toLocaleTimeString("en-IN")}\n━━━━━━━━━━━━━━━━━━━━`);
+      }
+    }
+  });
+  if(anyNewBreach) _playAlertBeep();
+  _updateAlertBanners(breachMap, valMap);
+  _updateLiveGreekDash(net,theta,vega,gamma);
+  updateSideMon();
+}
+
+let _modalDismissTimer=null;
+function _showGreekAlertModal(label, msg, val, min, max){
+  const existing=document.getElementById("greekAlertModal");if(existing)existing.remove();
+  if(_modalDismissTimer) clearTimeout(_modalDismissTimer);
+  const modal=document.createElement("div");modal.id="greekAlertModal";
+  modal.style.cssText=`position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;`;
+  modal.innerHTML=`<style>@keyframes shakeModal{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}</style>
+    <div style="background:#fff;border-radius:16px;padding:32px 36px;max-width:480px;width:90%;border-top:6px solid var(--red);text-align:center;position:relative;animation:shakeModal .4s ease;box-shadow:0 24px 64px rgba(0,0,0,.35);">
+      <div style="font-size:48px;margin-bottom:12px">🚨</div>
+      <div style="font-size:18px;font-weight:900;color:var(--red);margin-bottom:8px">GREEK ALERT</div>
+      <div style="font-size:14px;font-weight:800;color:var(--tp);margin-bottom:16px">${label} is OUT OF RANGE</div>
+      <div style="background:#fff5f5;border:1.5px solid rgba(211,47,47,.3);border-radius:10px;padding:14px 18px;margin-bottom:20px;text-align:left">
+        <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px;line-height:1.5">⚠ ${msg}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px"><span style="color:var(--tm)">Current Value</span><span style="font-family:var(--mono);font-weight:800;font-size:15px;color:var(--red)">${fvG(val)}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-top:6px"><span style="color:var(--tm)">Allowed Range</span><span style="font-family:var(--mono);font-weight:700;color:var(--grn)">[${min} to ${max}]</span></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('greekAlertModal').remove()" style="flex:1;padding:12px;border-radius:8px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:800;cursor:pointer;">⚠ Acknowledge & Adjust</button>
+        <button onclick="goStep('monitor');document.getElementById('greekAlertModal').remove();" style="flex:1;padding:12px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--ts);font-size:12px;font-weight:600;cursor:pointer;">Go to Monitor</button>
+      </div>
+      <div style="margin-top:12px;font-size:10px;color:var(--tl)">Auto-closes in <span id="modalCountdown">10</span>s</div>
+    </div>`;
+  document.body.appendChild(modal);
+  let secs=10;const countEl=document.getElementById("modalCountdown");
+  const countTick=setInterval(()=>{secs--;if(countEl)countEl.textContent=secs;if(secs<=0){clearInterval(countTick);const m=document.getElementById("greekAlertModal");if(m)m.remove();}},1000);
+  _modalDismissTimer=setTimeout(()=>{clearInterval(countTick);const m=document.getElementById("greekAlertModal");if(m)m.remove();},10500);
+  modal.addEventListener("click",e=>{if(e.target===modal){clearInterval(countTick);modal.remove();}});
+}
+
+function checkPnLAlerts(){
+  let pnl=0,totalCap=0;
+  placedLegs.forEach(l=>{
+    const ep=l.entryPrice||0,cp=l.ltp||ep,qty=l.qty||0;
+    pnl += l.txnType==="SELL" ? (ep-cp)*qty : (cp-ep)*qty;
+    totalCap += l.txnType==="BUY" ? ep*qty : spanMargin(l,qty);
+  });
+  if(!totalCap)return;
+  const pt=totalCap*CFG.pnl.profit_pct/100, ml=totalCap*CFG.pnl.loss_pct/100;
+  const pe=document.getElementById("pnlTotal");if(pe){pe.textContent="₹"+(pnl>=0?"+":"")+pnl.toFixed(2);pe.className="pnl-val "+(pnl>=0?"pos":"neg");}
+  document.getElementById("pnlInvested").textContent="₹"+fmt(totalCap);
+  document.getElementById("pnlTarget").textContent="₹+"+pt.toFixed(2);
+  document.getElementById("pnlMaxLoss").textContent="-₹"+ml.toFixed(2);
+  document.getElementById("pnlTargetBar").style.width=Math.min(100,Math.max(0,(pnl/pt)*100))+"%";
+  document.getElementById("pnlLossBar").style.width=Math.min(100,Math.max(0,(-pnl/ml)*100))+"%";
+  document.getElementById("sbPnlTarget").textContent="₹+"+pt.toFixed(2);
+  document.getElementById("sbPnlLoss").textContent="-₹"+ml.toFixed(2);
+  document.getElementById("pnlSection").style.display="";
+  if(pnl>=pt&&Date.now()-lastAlertTs>60000){toast("🎯 Profit target reached","ok");addLog("OK","PROFIT TARGET: ₹"+pnl.toFixed(2));sendWaAlert("ok","✅ PROFIT TARGET\n₹"+pnl.toFixed(2));lastAlertTs=Date.now();}
+  else if(-pnl>=ml&&Date.now()-lastAlertTs>30000){toast("🚨 Max loss reached","err");addLog("ERR","MAX LOSS: ₹"+pnl.toFixed(2));sendWaAlert("err","🚨 MAX LOSS\n₹"+pnl.toFixed(2));lastAlertTs=Date.now();}
+}
+
+function updateGreeksMonitorSection(net,theta,vega,gamma){
+  _updateLiveGreekDash(net,theta,vega,gamma);
+}
+
+function updateSideMon(){
+  if(!placedLegs.length){document.getElementById("sideMonContent").innerHTML=`<div style="font-size:11px;color:var(--tm)">Not started.</div>`;return;}
+  const {delta:net,theta,vega,gamma}=calcNetGreeks(placedLegs);
+  function sRow(label,val,min,max,icon){
+    const ok=val>=min&&val<=max;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+      <div><div style="font-size:9px;color:var(--tm)">${icon} ${label}</div><div style="font-size:8px;color:var(--tl)">[${min}, ${max}]</div></div>
+      <div style="text-align:right"><div style="font-size:13px;font-weight:800;font-family:var(--mono);color:${ok?"var(--grn)":"var(--red)"}">${fvG(val)}</div><span style="font-size:8px;font-weight:700;color:${ok?"var(--grn)":"var(--red)"}">${ok?"✓":"✗ ALERT"}</span></div>
+    </div>`;
+  }
+  const anyBreach=Object.values(_greekBreachState).some(Boolean);
+  document.getElementById("sideMonContent").innerHTML=
+    sRow("Net Delta",net,CFG.mon.delta_min,CFG.mon.delta_max,"Δ")+
+    sRow("Net Theta",theta,CFG.mon.theta_min,CFG.mon.theta_max,"θ")+
+    sRow("Net Vega",vega,CFG.mon.vega_min,CFG.mon.vega_max,"ν")+
+    sRow("Net Gamma",gamma,CFG.mon.gamma_min,CFG.mon.gamma_max,"Γ")+
+    `<div class="nd-verdict ${anyBreach?"bad":"ok"}" style="font-size:10px;padding:4px 8px;margin-top:4px">${anyBreach?"⚠ GREEK BREACH — Act Now":"✓ All Greeks Safe"}</div>`;
+}
+
+function renderMonitorCards(){
+  const exitEl=document.getElementById("exitSection");
+  if(!placedLegs.length){
+    document.getElementById("posGrid").innerHTML=`<div class="no-data" style="grid-column:1/-1">No positions.</div>`;
+    if(exitEl) exitEl.style.display="none";
+    return;
+  }
+  if(exitEl) exitEl.style.display="";
+  const {delta:net,theta,vega,gamma}=calcNetGreeks(placedLegs);
+  const netOk=net>=CFG.mon.delta_min&&net<=CFG.mon.delta_max;
+  const anyBreach=Object.values(_greekBreachState).some(Boolean);
+  const mv=document.getElementById("monNdValue");if(mv){mv.textContent=fvG(net);mv.style.color=netOk?"var(--grn)":"var(--red)";}
+  const ndV=document.getElementById("monNdVerdict");if(ndV){ndV.className="nd-verdict "+(netOk?"ok":"bad");ndV.textContent=netOk?"✓ Position Safe":"⚠ "+MON_ALERTS.delta;}
+  const tog=document.getElementById("monToggle");
+  if(tog&&monActive) tog.className="mon-toggle "+(anyBreach?"danger":"on");
+  document.getElementById("posGrid").innerHTML=placedLegs.map(leg=>{
+    const legOk=Math.abs(leg.delta)<=CFG.mon.delta_max,ep=leg.entryPrice||leg.ltp||0,cp=leg.ltp||0,qty=leg.qty||0;
+    const legPnL=leg.txnType==="SELL"?(ep-cp)*qty:(cp-ep)*qty;
+    const tradeTypeBadge=leg.paperTrade?`<span class="pc-badge" style="background:rgba(33,150,243,.15);color:var(--blue);border:1px solid rgba(33,150,243,.3)">PAPER</span>`:`<span class="pc-badge" style="background:rgba(0,166,81,.15);color:var(--grn);border:1px solid rgba(0,166,81,.3)">REAL</span>`;
+    const prodBadge=`<span class="pc-badge" style="background:rgba(124,58,237,.1);color:var(--pur);border:1px solid rgba(124,58,237,.2);font-size:8px">${leg.productLabel||leg.product||"NRML"}</span>`;
+    const capAmt=leg.txnType==="BUY"?ep*qty:spanMargin(leg,qty);
+    return `<div class="pos-card ${legOk?"safe":"risk"}">
+      <div class="pc-head"><div class="pc-sym">${leg.symbol}</div><div style="display:flex;gap:4px;flex-wrap:wrap"><span class="pc-badge ${leg.type}">${leg.type}</span><span class="pc-badge ${leg.txnType}">${leg.txnType}</span>${tradeTypeBadge}${prodBadge}</div></div>
+      <div class="pc-row"><span class="pc-key">Current Δ</span><span class="pc-val ${legOk?"ok":"bad"}">${fvG(leg.delta)}</span></div>
+      <div class="pc-row"><span class="pc-key">Entry Δ</span><span class="pc-val">${fvG(leg.entryDelta)}</span></div>
+      <div class="pc-row"><span class="pc-key">θ Theta</span><span class="pc-val">${fvG(leg.theta)}</span></div>
+      <div class="pc-row"><span class="pc-key">ν Vega</span><span class="pc-val">${fvG(leg.vega)}</span></div>
+      <div class="pc-row"><span class="pc-key">Γ Gamma</span><span class="pc-val">${fvG(leg.gamma)}</span></div>
+      <div class="pc-row"><span class="pc-key">Entry Price</span><span class="pc-val">₹${ep.toFixed(2)}</span></div>
+      <div class="pc-row"><span class="pc-key">${leg.txnType==="BUY"?"Premium Paid":"~Margin Req"}</span><span class="pc-val" style="color:${leg.txnType==="BUY"?"var(--grn)":"var(--red)"}">₹${fmt2(capAmt)}</span></div>
+      <div class="pc-row"><span class="pc-key">Current LTP</span><span class="pc-val">₹${cp.toFixed(2)}</span></div>
+      <div class="pc-row" style="border-top:1px solid var(--bdr);margin-top:4px;padding-top:4px"><span class="pc-key">P&L</span><span class="pc-val" style="color:${legPnL>=0?"var(--grn)":"var(--red)"};font-weight:800">₹${legPnL>=0?"+":""}${legPnL.toFixed(2)}</span></div>
+      <button onclick="initExitSingleLeg('${leg.symbol}',${qty},'${leg.txnType}')" style="margin-top:8px;width:100%;padding:5px;background:var(--red-l);border:1px solid rgba(211,47,47,.2);color:var(--red);border-radius:4px;font-size:10px;font-weight:700;cursor:pointer">${leg.paperTrade?"📋":"⚡"} Exit This Leg</button>
+    </div>`;
+  }).join("");
+}
+
+// ══════════════════════════════════════════════
+//  EXIT
+// ══════════════════════════════════════════════
+function showExitConfirm(title, message, onConfirm) {
+  const existing=document.getElementById("exitOverlay");if(existing)existing.remove();
+  const overlay=document.createElement("div");overlay.id="exitOverlay";overlay.className="exit-confirm-overlay";
+  overlay.innerHTML=`<div class="exit-confirm-box"><h3>⚠ ${title}</h3><p>${message}</p><div class="exit-confirm-btns"><button class="exit-yes" id="exitYesBtn">YES, EXIT</button><button class="exit-no" onclick="document.getElementById('exitOverlay').remove()">Cancel</button></div></div>`;
+  document.body.appendChild(overlay);
+  document.getElementById("exitYesBtn").onclick=()=>{overlay.remove();onConfirm();};
+}
+
+async function fetchPaperStatus(){
+  try{
+    const r=await fetch(`${API}/paper/status`,{signal:AbortSignal.timeout(4000)});
+    if(!r.ok) return;
+    const d=await r.json();
+    paperMode=d.paper_trading_enabled===true;
+    updateTradeModeUI();
+    addLog("INFO",paperMode?"📋 PAPER TRADING mode active":"⚡ LIVE TRADING mode — real money");
+  }catch(e){paperMode=true;updateTradeModeUI();}
+}
+
+function updateTradeModeUI(){
+  const placeBtn=document.getElementById("placeOrderBtn");
+  if(placeBtn){
+    if(paperMode){placeBtn.style.opacity="0.4";placeBtn.title="Backend is in PAPER mode — use 📋 PAPER TRADE button";}
+    else{placeBtn.style.opacity="1";placeBtn.title="LIVE ORDER — real money via Zerodha";}
+  }
+}
+
+function initExit(){
+  if(!placedLegs.length){toast("No positions to exit","warn");return;}
+  const label=paperMode?"Exit ALL Paper Positions":"⚠ EXIT ALL POSITIONS (REAL MONEY)";
+  const msg=paperMode?`Close all ${placedLegs.length} paper position${placedLegs.length>1?"s":""}?`:`⚠ REAL MONEY — Send market orders to close all ${placedLegs.length} position${placedLegs.length>1?"s":""}?`;
+  showExitConfirm(label,msg,doExit);
+}
+
+function initExitSingleLeg(symbol,qty,txnType){
+  const isPaper=placedLegs.find(l=>l.symbol===symbol)?.paperTrade!==false;
+  showExitConfirm((isPaper?"📋 Exit Paper: ":"⚡ Exit LIVE: ")+symbol,isPaper?`Close paper position for ${symbol} (Qty: ${qty})?`:`⚠ REAL MONEY — Send market close order for ${symbol} (Qty: ${qty})?`,()=>doExitSingleLeg(symbol,qty,txnType));
+}
+
+async function doExit(){
+  if(!placedLegs.length)return;
+  const prod=placedLegs[0]?.product||"NRML";
+  const exitEl=document.getElementById("exitSection");
+  if(exitEl)exitEl.innerHTML='<button class="action-btn danger" disabled>⏳ Exiting...</button>';
+  addLog("INFO",`Exiting all ${placedLegs.length} positions`);
+
+  const isPaperExit = placedLegs.some(l=>l.paperTrade===true);
+
+  // ── Shared cleanup helper ─────────────────────────────────
+  function _completeExit(){
+    let pnl=0; const ls=[...placedLegs];
+    ls.forEach(l=>{const ep=l.entryPrice||0,cp=l.ltp||ep;pnl+=l.txnType==="SELL"?(ep-cp)*l.qty:(cp-ep)*l.qty;});
+    addToHistory(ls,pnl);
+    addLog(pnl>=0?"OK":"WARN",`All positions exited. P&L: ₹${pnl.toFixed(2)}`);
+    sendWaAlert(pnl>=0?"ok":"warn",`${pnl>=0?"✅":"❌"} EXITED ALL ₹${pnl.toFixed(2)}`);
+    placedLegs=[];savePlacedLegs();
+    if(monActive){clearInterval(monInterval);monInterval=null;monActive=false;}
+    document.getElementById("monToggle").className="mon-toggle";
+    document.getElementById("monToggle").innerHTML='<div class="mdot y"></div> START MONITORING';
+    document.getElementById("monTimerRow").style.display="none";
+    Object.keys(_greekBreachState).forEach(k=>_greekBreachState[k]=false);
+    _updateAlertBanners({delta:false,theta:false,vega:false,gamma:false},{delta:0,theta:0,vega:0,gamma:0});
+    const greeksDash=document.getElementById("greeksLiveDash");if(greeksDash)greeksDash.style.display="none";
+    renderMonitorCards();
+    toast(`✓ Exited all. P&L: ₹${pnl>=0?"+":""}${pnl.toFixed(2)}`,pnl>=0?"ok":"warn");
+  }
+
+  // ── PAPER: no backend call needed — all virtual, local only ──
+  if(isPaperExit){
+    addLog("INFO","📋 Paper exit — local only (no Zerodha call)");
+    _completeExit();
+    return;
+  }
+
+  // ── REAL: call Zerodha /exit-legs ─────────────────────────
+  addLog("INFO","⚡ Real exit → /exit-legs");
+  try{
+    const r=await fetch(`${API}/exit-legs`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({legs:placedLegs.map(l=>({symbol:l.symbol,transaction_type:l.txnType,original_transaction_type:l.txnType,quantity:l.qty,ltp:l.ltp||0,strike:l.strike||0})),product:prod})});
+    let d;try{d=await r.json();}catch(e){d=null;}
+    if(!r.ok){
+      toast("❌ Exit failed: "+(d?.detail||"HTTP "+r.status),"err");
+      document.getElementById("exitSection").innerHTML=`<button class="action-btn danger" style="font-size:14px;padding:12px 16px;" onclick="initExit()">⚠ EXIT ALL POSITIONS</button>`;
+      return;
+    }
+    _completeExit();
+  }catch(e){
+    toast("❌ Exit error: "+e.message,"err");addLog("ERR","Exit exception: "+e.message);
+    if(document.getElementById("exitSection"))
+      document.getElementById("exitSection").innerHTML=`<button class="action-btn danger" style="font-size:14px;padding:12px 16px;" onclick="initExit()">⚠ EXIT ALL POSITIONS</button>`;
+  }
+}
+
+async function doExitSingleLeg(symbol,qty,txnType){
+  addLog("INFO",`Exiting single leg: ${symbol}`);
+  const legData = placedLegs.find(l=>l.symbol===symbol);
+  const isPaperLeg = legData?.paperTrade===true;
+
+  // ── Shared single-leg cleanup (paper + real) ──────────────
+  function _completeSingleExit(){
+    const el=placedLegs.find(l=>l.symbol===symbol);
+    placedLegs=placedLegs.filter(l=>l.symbol!==symbol); savePlacedLegs();
+    const ep=el?.entryPrice||0, cp=el?.ltp||ep;
+    const lp=el?((el.txnType==="SELL"?(ep-cp):(cp-ep))*qty):0;
+    if(el) addToHistory([el],lp);
+    addLog(lp>=0?"OK":"WARN",`${symbol} exited. P&L: ₹${lp.toFixed(2)}`);
+    toast(`✓ ${symbol} exited. ₹${lp>=0?"+":""}${lp.toFixed(2)}`,lp>=0?"ok":"warn");
+    renderMonitorCards();
+    if(placedLegs.length===0&&monActive){
+      clearInterval(monInterval);monInterval=null;monActive=false;
+      document.getElementById("monToggle").className="mon-toggle";
+      document.getElementById("monToggle").innerHTML='<div class="mdot y"></div> START MONITORING';
+      document.getElementById("monTimerRow").style.display="none";
+    }
+  }
+
+  // ── PAPER: no backend call — local only ───────────────────
+  if(isPaperLeg){
+    addLog("INFO",`📋 Paper single exit — local only`);
+    _completeSingleExit();
+    return;
+  }
+
+  // ── REAL: call Zerodha /exit-legs ─────────────────────────
+  addLog("INFO",`⚡ Real single exit → /exit-legs`);
+  try{
+    const r=await fetch(`${API}/exit-legs`,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({legs:[{symbol,transaction_type:txnType,original_transaction_type:txnType,
+        quantity:qty,ltp:legData?.ltp||0,strike:legData?.strike||0}],
+        product:placedLegs[0]?.product||"NRML"})});
+    let d;try{d=await r.json();}catch(e){d=null;}
+    if(!r.ok){toast("❌ Exit failed: "+(d?.detail||"HTTP "+r.status),"err");return;}
+    _completeSingleExit();
+  }catch(e){toast("❌ "+e.message,"err");}
+}
+
+// ══════════════════════════════════════════════
+//  HISTORY / LOGS
+// ══════════════════════════════════════════════
+function saveTradeHistory(){try{localStorage.setItem("tradeHistory",JSON.stringify(tradeHistory));}catch(e){}updateHistoryView();}
+function addToHistory(legs,pnl){
+  const now=new Date();
+  tradeHistory.unshift({timestamp:now.toISOString(),date:now.toLocaleDateString("en-IN"),time:now.toLocaleTimeString("en-IN",{hour12:false}),legs:legs.map(l=>({symbol:l.symbol,type:l.type,strike:l.strike,txnType:l.txnType,qty:l.qty,entryPrice:l.entryPrice,exitPrice:l.ltp})),totalPnL:pnl,count:legs.length,mode:legs.some(l=>l.paperTrade)?"PAPER":"LIVE"});
+  if(tradeHistory.length>100)tradeHistory=tradeHistory.slice(0,100);
+  saveTradeHistory();
+}
+function loadTradeHistory(){try{const s=localStorage.getItem("tradeHistory");if(s)tradeHistory=JSON.parse(s);updateHistoryView();}catch(e){}}
+function updateHistoryView(){
+  const panel=document.getElementById("tradeHistoryList"),sec=document.getElementById("tradeHistorySection");
+  if(!tradeHistory.length){if(sec)sec.style.display="none";return;}
+  if(sec)sec.style.display="";if(!panel)return;
+  panel.innerHTML=tradeHistory.map(t=>{
+    const isPaper=t.mode==="PAPER"||t.type==="PAPER";
+    const modeBadge=isPaper?`<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(33,150,243,.15);color:#42a5f5;border:1px solid rgba(33,150,243,.3)">PAPER</span>`:`<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(0,166,81,.15);color:#4caf50;border:1px solid rgba(0,166,81,.3)">LIVE</span>`;
+    return `<div class="hist-item ${(t.totalPnL||0)>=0?"win":"loss"}">
+      <div class="hist-row">
+        <div>
+          <div class="hist-pnl ${(t.totalPnL||0)>=0?"pos":"neg"}">₹${(t.totalPnL||0)>=0?"+":""}${(t.totalPnL||0).toFixed(2)}</div>
+          <div class="hist-meta">${modeBadge} ${t.count||0} positions · ${t.date||""} ${t.time||""}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function addLog(level,msg){
+  const ts=new Date().toLocaleTimeString("en-IN",{hour12:false});
+  logEntries.unshift({ts,level,msg});if(logEntries.length>200)logEntries=logEntries.slice(0,200);
+  const panel=document.getElementById("logBox");
+  if(panel){const cls=level==="OK"?"log-ok":level==="ERR"?"log-err":level==="WARN"?"log-warn":"log-info";panel.innerHTML=`<div class="log-entry"><span class="log-ts">[${ts}][${level}]</span> <span class="${cls}">${msg}</span></div>`+panel.innerHTML;}
+}
+function downloadLogs(){const b=new Blob([logEntries.map(e=>`[${e.ts}][${e.level}] ${e.msg}`).join("\n")],{type:"text/plain"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=`log-${IDX}-${new Date().toISOString().slice(0,10)}.txt`;a.click();URL.revokeObjectURL(u);toast("Downloaded","ok");}
+function clearLogs(){if(!confirm("Clear logs?"))return;logEntries=[];document.getElementById("logBox").innerHTML=`<div class="log-entry"><span class="log-ts">[INIT]</span> <span class="log-info">Cleared.</span></div>`;toast("Cleared","ok");}
+
+// ══════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════
+function loadConfig(){
+  ["greeksConfig_v1","greeksConfig_v2","greeksConfig_v3","greeksConfig_v4","greeksConfig_v5"].forEach(k=>localStorage.removeItem(k));
+  try{
+    const s=localStorage.getItem("greeksConfig_v6");
+    if(s){
+      const parsed=JSON.parse(s);
+      function safeNum(val,def,absMin,absMax){const n=parseFloat(val);if(isNaN(n)||n<absMin||n>absMax) return def;return n;}
+      const p=parsed.pre||{},m=parsed.mon||{},sl=parsed.sel||{},pl=parsed.pnl||{};
+      CFG={
+        sel:{ce_delta:safeNum(sl.ce_delta,DEFAULT_CFG.sel.ce_delta,-0.99,0.99),pe_delta:safeNum(sl.pe_delta,DEFAULT_CFG.sel.pe_delta,-0.99,0.99),delta_buffer:safeNum(sl.delta_buffer,DEFAULT_CFG.sel.delta_buffer??0.05,0,0.5),vega_tol:safeNum(sl.vega_tol,DEFAULT_CFG.sel.vega_tol,0.001,99)},
+        pre:{delta_min:safeNum(p.delta_min,DEFAULT_CFG.pre.delta_min,-999,999),delta_max:safeNum(p.delta_max,DEFAULT_CFG.pre.delta_max,-999,999),theta_min:safeNum(p.theta_min,DEFAULT_CFG.pre.theta_min,-99999,99999),theta_max:safeNum(p.theta_max,DEFAULT_CFG.pre.theta_max,-99999,99999),vega_min:safeNum(p.vega_min,DEFAULT_CFG.pre.vega_min,-9999,9999),vega_max:safeNum(p.vega_max,DEFAULT_CFG.pre.vega_max,-9999,9999),gamma_min:safeNum(p.gamma_min,DEFAULT_CFG.pre.gamma_min,-99,99),gamma_max:safeNum(p.gamma_max,DEFAULT_CFG.pre.gamma_max,-99,99)},
+        mon:{delta_min:safeNum(m.delta_min,DEFAULT_CFG.mon.delta_min,-999,999),delta_max:safeNum(m.delta_max,DEFAULT_CFG.mon.delta_max,-999,999),theta_min:safeNum(m.theta_min,DEFAULT_CFG.mon.theta_min,-99999,99999),theta_max:safeNum(m.theta_max,DEFAULT_CFG.mon.theta_max,-99999,99999),vega_min:safeNum(m.vega_min,DEFAULT_CFG.mon.vega_min,-9999,9999),vega_max:safeNum(m.vega_max,DEFAULT_CFG.mon.vega_max,-9999,9999),gamma_min:safeNum(m.gamma_min,DEFAULT_CFG.mon.gamma_min,-99,99),gamma_max:safeNum(m.gamma_max,DEFAULT_CFG.mon.gamma_max,-99,99)},
+        pnl:{profit_pct:safeNum(pl.profit_pct,DEFAULT_CFG.pnl.profit_pct,0.01,100),loss_pct:safeNum(pl.loss_pct,DEFAULT_CFG.pnl.loss_pct,0.01,100)}
+      };
+    } else {CFG=JSON.parse(JSON.stringify(DEFAULT_CFG));}
+  }catch(e){CFG=JSON.parse(JSON.stringify(DEFAULT_CFG));}
+}
+
+function saveConfig(){
+  const g=id=>{const e=document.getElementById(id);if(!e)return 0;const v=parseFloat(e.value);return isNaN(v)?0:v;};
+  CFG={
+    sel:{ce_delta:g("cfg_sel_ce_delta"),pe_delta:g("cfg_sel_pe_delta"),delta_buffer:g("cfg_sel_delta_buffer"),vega_tol:g("cfg_sel_vega_tol")},
+    pre:{delta_min:g("cfg_pre_delta_min"),delta_max:g("cfg_pre_delta_max"),theta_min:g("cfg_pre_theta_min"),theta_max:g("cfg_pre_theta_max"),vega_min:g("cfg_pre_vega_min"),vega_max:g("cfg_pre_vega_max"),gamma_min:g("cfg_pre_gamma_min"),gamma_max:g("cfg_pre_gamma_max")},
+    mon:{delta_min:g("cfg_mon_delta_min"),delta_max:g("cfg_mon_delta_max"),theta_min:g("cfg_mon_theta_min"),theta_max:g("cfg_mon_theta_max"),vega_min:g("cfg_mon_vega_min"),vega_max:g("cfg_mon_vega_max"),gamma_min:g("cfg_mon_gamma_min"),gamma_max:g("cfg_mon_gamma_max")},
+    pnl:{profit_pct:g("cfg_profit_pct"),loss_pct:g("cfg_loss_pct")}
+  };
+  localStorage.setItem("greeksConfig_v6",JSON.stringify(CFG));
+  updateConfigDisplayBars();loadConfigUI();runGreeksCheck();updateSideCheck();
+  if(placedLegs.length){updateSideMon();const {delta,theta,vega,gamma}=calcNetGreeks(placedLegs);updateGreeksMonitorSection(delta,theta,vega,gamma);renderMonitorCards();}
+  const btn=document.getElementById("cfgSaveBtn");
+  if(btn){btn.textContent="✓ Saved!";btn.style.background="var(--grn)";setTimeout(()=>{btn.textContent="💾 Save Configuration";btn.style.background="";},2000);}
+  toast(`✓ Config saved`,"ok");
+  addLog("OK",`Config saved ✓`);
+}
+
+function resetConfig(){
+  if(!confirm("Reset all config to defaults?"))return;
+  CFG=JSON.parse(JSON.stringify(DEFAULT_CFG));
+  localStorage.setItem("greeksConfig_v6",JSON.stringify(CFG));
+  updateConfigDisplayBars();loadConfigUI();runGreeksCheck();updateSideCheck();
+  toast("Config reset to defaults","ok");
+}
+
+function loadConfigUI(){
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+  set("cfg_sel_ce_delta",CFG.sel?.ce_delta??0.20);set("cfg_sel_pe_delta",CFG.sel?.pe_delta??-0.20);set("cfg_sel_delta_buffer",CFG.sel?.delta_buffer??0.05);set("cfg_sel_vega_tol",CFG.sel?.vega_tol??0.3);
+  set("cfg_pre_delta_min",CFG.pre.delta_min);set("cfg_pre_delta_max",CFG.pre.delta_max);
+  set("cfg_pre_theta_min",CFG.pre.theta_min);set("cfg_pre_theta_max",CFG.pre.theta_max);
+  set("cfg_pre_vega_min",CFG.pre.vega_min);set("cfg_pre_vega_max",CFG.pre.vega_max);
+  set("cfg_pre_gamma_min",CFG.pre.gamma_min);set("cfg_pre_gamma_max",CFG.pre.gamma_max);
+  set("cfg_mon_delta_min",CFG.mon.delta_min);set("cfg_mon_delta_max",CFG.mon.delta_max);
+  set("cfg_mon_theta_min",CFG.mon.theta_min);set("cfg_mon_theta_max",CFG.mon.theta_max);
+  set("cfg_mon_vega_min",CFG.mon.vega_min);set("cfg_mon_vega_max",CFG.mon.vega_max);
+  set("cfg_mon_gamma_min",CFG.mon.gamma_min);set("cfg_mon_gamma_max",CFG.mon.gamma_max);
+  set("cfg_profit_pct",CFG.pnl.profit_pct);set("cfg_loss_pct",CFG.pnl.loss_pct);
+}
+
+// ══════════════════════════════════════════════
+//  WHATSAPP
+// ══════════════════════════════════════════════
+function loadWaConfig(){try{const c=JSON.parse(localStorage.getItem("waConfig")||"{}");if(c.phone)document.getElementById("waPhone").value=c.phone;if(c.sid)document.getElementById("waSid").value=c.sid;if(c.token)document.getElementById("waToken").value=c.token;if(c.enabled){document.getElementById("waEnabled").checked=true;toggleWa(true);}}catch(e){}}
+function saveWa(){localStorage.setItem("waConfig",JSON.stringify({phone:document.getElementById("waPhone").value.trim(),sid:document.getElementById("waSid").value.trim(),token:document.getElementById("waToken").value.trim(),enabled:document.getElementById("waEnabled").checked}));}
+function toggleWa(on){document.getElementById("waPanel").style.display=on?"":"none";saveWa();}
+async function testWa(){const c=JSON.parse(localStorage.getItem("waConfig")||"{}");if(!c.phone||!c.sid||!c.token){toast("Fill WA fields","warn");return;}const s=document.getElementById("waTestStatus");s.textContent="Sending...";try{const r=await fetch(`${API}/send-whatsapp`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone:c.phone,message:`✅ Test from ${IDX}`,level:"test",twilio_sid:c.sid,twilio_token:c.token,from_number:"whatsapp:+14155238886"})});const d=await r.json();s.textContent=d.status==="success"?"✓ Sent!":"✗ "+(d.error||"");s.style.color=d.status==="success"?"var(--grn)":"var(--red)";}catch(e){s.textContent="✗ Error";}}
+async function sendWaAlert(level,msg){const c=JSON.parse(localStorage.getItem("waConfig")||"{}");if(!c.enabled||!c.phone||!c.sid||!c.token)return;try{await fetch(`${API}/send-whatsapp`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone:c.phone,message:msg,level,twilio_sid:c.sid,twilio_token:c.token,from_number:"whatsapp:+14155238886"})});}catch(e){}}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function unlockStep(s){const b=document.getElementById("sbtn-"+s);if(b&&b.classList.contains("locked"))b.classList.remove("locked");}
+function savePlacedLegs(){try{localStorage.setItem("placedLegs",JSON.stringify(placedLegs));}catch(e){}}
+function loadPlacedLegs(){
+  try{
+    const s=localStorage.getItem("placedLegs");
+    if(s){
+      placedLegs=JSON.parse(s);
+      if(placedLegs.length){
+        renderMonitorCards();unlockStep("monitor");
+        const exitEl=document.getElementById("exitSection");if(exitEl)exitEl.style.display="";
+      }
+    }
+  }catch(e){}
+}
+async function apiFetch(url,opts={}){const r=await fetch(url,opts);if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}
+
+function calcNetGreeks(legsList){
+  let delta=0,theta=0,vega=0,gamma=0;
+  legsList.forEach(l=>{
+    if(!l||(l.strike===0&&!l.symbol))return;
+    const s=(l.txnType||"SELL")==="SELL"?-1:1;
+    delta+=(l.delta||0)*s;theta+=(l.theta||0)*s;vega+=(l.vega||0)*s;gamma+=(l.gamma||0)*s;
+  });
+  return {delta,theta,vega,gamma};
+}
+function fmt(n,d=2){if(n==null||isNaN(n))return"—";return Number(n).toLocaleString("en-IN",{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fvFull(n,prefix=""){if(n==null||isNaN(n))return"—";return prefix+parseFloat(n.toPrecision(10)).toString();}
+function fvG(n){if(n==null||isNaN(n))return"—";return(n>=0?"+":"")+parseFloat(n.toPrecision(10)).toString();}
+function sign(n){return n>=0?"+":"";}
+function toast(msg,type="info"){const t=document.getElementById("toastEl");t.textContent=msg;t.className=`toast show ${type}`;clearTimeout(t._t);t._t=setTimeout(()=>{t.className="toast";},4500);}
+</script>
+</body>
+</html>

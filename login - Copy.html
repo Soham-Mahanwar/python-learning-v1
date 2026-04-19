@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Options Terminal — Login</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&display=swap');
+:root {
+  --bg:#080b12;--bg2:#0e1420;--bg3:#141c2e;--bg4:#1a2238;
+  --bdr:rgba(255,255,255,.07);
+  --orange:#ff6b00;--or-l:#ff8c33;--or-d:#c85300;--or-bg:rgba(255,107,0,.08);--or-glow:rgba(255,107,0,.25);
+  --white:#e8ecf2;--sub:#8796a5;--dim:#4a5568;
+  --grn:#00d166;--grn-bg:rgba(0,209,102,.08);--grn-bdr:rgba(0,209,102,.25);
+  --red:#ff4757;--red-bg:rgba(255,71,87,.08);--red-bdr:rgba(255,71,87,.25);
+  --blue:#4da6ff;--blue-bg:rgba(77,166,255,.08);
+  --gld:#f5c842;--gld-bg:rgba(245,200,66,.08);
+  --mono:'JetBrains Mono',monospace;--head:'Syne',sans-serif;--body:'Inter',sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--white);font-family:var(--body);min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;padding-bottom:60px;}
+input,button{font-family:var(--body);}
+.bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.bg-layer::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,107,0,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,0,.03) 1px,transparent 1px);background-size:52px 52px;animation:gridMove 30s linear infinite;}
+@keyframes gridMove{0%{transform:translate(0,0)}100%{transform:translate(52px,52px)}}
+.orb{position:absolute;border-radius:50%;filter:blur(110px);}
+.o1{width:580px;height:580px;background:rgba(255,107,0,.07);top:-240px;left:-160px;animation:oF 16s ease-in-out infinite;}
+.o2{width:460px;height:460px;background:rgba(77,166,255,.05);bottom:-180px;right:-130px;animation:oF 19s ease-in-out infinite;animation-delay:-9s;}
+.o3{width:260px;height:260px;background:rgba(157,108,255,.04);top:50%;left:65%;animation:oF 13s ease-in-out infinite;animation-delay:-5s;}
+@keyframes oF{0%,100%{transform:translate(0,0) scale(1)}40%{transform:translate(22px,-16px) scale(1.04)}70%{transform:translate(-14px,22px) scale(.97)}}
+.topbar{position:sticky;top:0;z-index:200;width:100%;background:rgba(8,11,18,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 28px;height:52px;gap:12px;flex-shrink:0;}
+.tb-logo{display:flex;align-items:center;gap:10px;}
+.tb-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--orange),var(--or-d));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 14px var(--or-glow);}
+.tb-name{font-family:var(--head);font-size:16px;font-weight:800;letter-spacing:-.2px;}
+.tb-name span{color:var(--orange);}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.tb-ver{font-size:10px;font-family:var(--mono);color:var(--dim);}
+.tb-badge{font-size:10px;font-family:var(--mono);font-weight:700;letter-spacing:.07em;padding:3px 9px;border-radius:10px;text-transform:uppercase;}
+.badge-off{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bdr);}
+.badge-ok{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr);}
+.badge-spin{background:var(--or-bg);color:var(--orange);border:1px solid rgba(255,107,0,.2);}
+.page{position:relative;z-index:10;width:100%;max-width:500px;padding:36px 20px 0;}
+.hero{text-align:center;margin-bottom:28px;animation:fadeUp .5s ease both;}
+.hero-pill{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-family:var(--mono);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);background:var(--or-bg);border:1px solid rgba(255,107,0,.2);padding:4px 13px;border-radius:20px;margin-bottom:14px;}
+.hero-pill::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--orange);animation:blink 1.4s infinite;}
+.hero h1{font-family:var(--head);font-size:28px;font-weight:800;letter-spacing:-.6px;line-height:1.15;margin-bottom:8px;}
+.hero h1 em{color:var(--orange);font-style:normal;}
+.hero p{font-size:12.5px;color:var(--sub);line-height:1.65;max-width:360px;margin:0 auto;}
+.stepbar{display:flex;align-items:center;margin-bottom:24px;animation:fadeUp .5s .07s ease both;}
+.snode{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;z-index:1;}
+.scirc{width:34px;height:34px;border-radius:50%;border:2px solid var(--bdr);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:800;color:var(--dim);transition:all .3s cubic-bezier(.16,1,.3,1);}
+.slbl{font-size:9px;font-family:var(--mono);color:var(--dim);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;transition:color .3s;}
+.snode.active .scirc{border-color:var(--orange);background:var(--or-bg);color:var(--orange);box-shadow:0 0 0 4px rgba(255,107,0,.12);}
+.snode.active .slbl{color:var(--orange);}
+.snode.done .scirc{border-color:var(--grn);background:var(--grn-bg);color:var(--grn);}
+.snode.done .slbl{color:var(--grn);}
+.sline{flex:1;height:1.5px;background:var(--bdr);margin-bottom:20px;margin-top:17px;max-width:60px;transition:background .4s;}
+.sline.done{background:var(--grn);opacity:.5;}
+.card{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:30px 32px 34px;position:relative;overflow:hidden;box-shadow:0 0 0 1px rgba(255,107,0,.04),0 24px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.04);animation:cardIn .5s cubic-bezier(.16,1,.3,1) both;}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--orange) 28%,var(--or-l) 50%,var(--orange) 72%,transparent);opacity:.75;}
+.panel{display:none;}
+.panel.active{display:block;animation:panelIn .28s ease both;}
+@keyframes panelIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+.ph{font-family:var(--head);font-size:21px;font-weight:800;letter-spacing:-.3px;margin-bottom:5px;}
+.ps{font-size:12px;color:var(--sub);line-height:1.65;margin-bottom:22px;}
+.ps a{color:var(--orange);text-decoration:none;border-bottom:1px solid rgba(255,107,0,.3);}
+.ps a:hover{border-color:var(--orange);}
+.field{margin-bottom:15px;}
+.flbl{font-size:10px;font-family:var(--mono);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;}
+.fhint{font-size:9px;color:var(--dim);font-family:var(--body);font-weight:400;text-transform:none;letter-spacing:0;}
+.fwrap{position:relative;}
+.finp{width:100%;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:9px;padding:12px 44px 12px 14px;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--white);outline:none;transition:border-color .2s,box-shadow .2s,background .2s;}
+.finp::placeholder{color:var(--dim);font-weight:400;}
+.finp:focus{border-color:var(--orange);background:rgba(255,107,0,.04);box-shadow:0 0 0 3px rgba(255,107,0,.1);}
+.finp.ok{border-color:rgba(0,209,102,.5);}
+.finp.err{border-color:rgba(255,71,87,.5);}
+.finp.nopad{padding-right:14px;}
+.ficon{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:4px;line-height:1;transition:color .2s;display:flex;align-items:center;}
+.ficon:hover{color:var(--orange);}
+.box{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border-radius:9px;font-size:11.5px;line-height:1.65;margin-bottom:16px;}
+.box-i{background:var(--blue-bg);border:1px solid rgba(77,166,255,.2);color:var(--blue);}
+.box-s{background:var(--grn-bg);border:1px solid var(--grn-bdr);color:#6fcf97;}
+.box-w{background:var(--gld-bg);border:1px solid rgba(245,200,66,.25);color:var(--gld);}
+.box-e{background:var(--red-bg);border:1px solid var(--red-bdr);color:var(--red);}
+.box-ico{font-size:15px;flex-shrink:0;margin-top:1px;line-height:1;}
+.box-body{flex:1;}
+.box-body code{font-family:var(--mono);font-size:10px;background:rgba(0,0,0,.25);padding:1px 5px;border-radius:3px;}
+.box-body strong{font-weight:700;}
+.urlbox{background:var(--bg4);border:1.5px solid var(--bdr);border-radius:9px;padding:12px 46px 12px 14px;font-family:var(--mono);font-size:11px;color:var(--blue);word-break:break-all;line-height:1.6;margin-bottom:12px;cursor:pointer;transition:border-color .2s;position:relative;user-select:all;}
+.urlbox:hover{border-color:rgba(77,166,255,.4);}
+.urlbox-copy{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--bg3);border:1px solid var(--bdr);border-radius:5px;color:var(--sub);font-size:10px;padding:3px 7px;cursor:pointer;transition:all .2s;font-family:var(--body);}
+.urlbox-copy:hover{border-color:var(--blue);color:var(--blue);}
+.btn{width:100%;padding:13px 20px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.01em;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--body);}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none !important;}
+.btn-or{background:linear-gradient(135deg,var(--orange),var(--or-d));color:#fff;box-shadow:0 4px 20px rgba(255,107,0,.3),inset 0 1px 0 rgba(255,255,255,.12);}
+.btn-or:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 28px rgba(255,107,0,.45),inset 0 1px 0 rgba(255,255,255,.12);}
+.btn-blue{background:linear-gradient(135deg,#3f85db,#2869b5);color:#fff;box-shadow:0 4px 20px rgba(56,126,209,.3);}
+.btn-blue:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 28px rgba(56,126,209,.5);}
+.btn-grn{background:linear-gradient(135deg,#00d166,#00a651);color:#fff;font-size:14px;padding:15px 20px;box-shadow:0 4px 24px rgba(0,209,102,.3),inset 0 1px 0 rgba(255,255,255,.12);}
+.btn-grn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 32px rgba(0,209,102,.5);}
+.btn-ghost{background:transparent;border:1.5px solid var(--bdr);color:var(--sub);font-size:12px;padding:10px 16px;}
+.btn-ghost:hover:not(:disabled){border-color:var(--orange);color:var(--orange);}
+.btn-ghost.red{border-color:var(--red-bdr);color:var(--red);}
+.btn-ghost.red:hover{background:var(--red-bg);border-color:var(--red);}
+.btn-row{display:flex;gap:10px;margin-top:14px;}
+.btn-row .btn{flex:1;}
+.btn-back{flex:0 0 auto !important;width:auto !important;padding:12px 18px !important;}
+.step-badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-family:var(--mono);font-weight:700;letter-spacing:.06em;color:var(--orange);text-transform:uppercase;margin-bottom:16px;}
+.step-badge::before{content:attr(data-n);width:20px;height:20px;border-radius:50%;background:var(--orange);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.envpre{background:#040710;border:1.5px solid var(--bdr);border-radius:9px;padding:16px 18px;font-family:var(--mono);font-size:12px;line-height:2;margin-bottom:16px;}
+.ec{color:#3d4f65;}.ek{color:var(--blue);}.ev{color:var(--grn);}.ee{color:#3d4f65;padding:0 2px;}
+.envbtns{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
+.envbtn{background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--sub);font-size:10px;font-weight:600;padding:4px 10px;cursor:pointer;transition:all .2s;font-family:var(--body);display:flex;align-items:center;gap:4px;}
+.envbtn:hover{border-color:var(--orange);color:var(--orange);}
+.bkbar{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:9px;margin-bottom:16px;transition:border-color .3s;}
+.bkbar.ok{border-color:rgba(0,209,102,.35);}
+.bkbar.off{border-color:rgba(255,71,87,.35);}
+.bkbar.chk{border-color:rgba(255,107,0,.35);}
+.bkdot{width:9px;height:9px;border-radius:50%;background:var(--dim);flex-shrink:0;}
+.bkbar.ok .bkdot{background:var(--grn);animation:blink 1.4s infinite;}
+.bkbar.off .bkdot{background:var(--red);}
+.bkbar.chk .bkdot{background:var(--orange);animation:blink .7s infinite;}
+.bktxt{font-size:11px;font-family:var(--mono);color:var(--sub);flex:1;line-height:1.5;}
+.bktxt b{color:var(--white);}
+.bktxt code{color:var(--orange);font-size:10px;font-family:var(--mono);}
+.bkbtn{background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer;transition:color .2s,transform .3s;line-height:1;padding:2px;}
+.bkbtn:hover{color:var(--orange);}
+.bkbtn.spin{animation:rspin .6s linear infinite;}
+.idxgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
+.idxcard{background:var(--bg3);border:1.5px solid var(--bdr);border-radius:9px;padding:12px 14px;cursor:pointer;transition:all .2s;}
+.idxcard:hover{border-color:rgba(255,107,0,.35);}
+.idxcard.on{border-color:var(--orange);background:var(--or-bg);box-shadow:0 0 0 1px rgba(255,107,0,.12);}
+.idxname{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--white);margin-bottom:3px;display:flex;align-items:center;gap:6px;}
+.idxname::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:background .2s;}
+.idxcard.on .idxname{color:var(--orange);}
+.idxcard.on .idxname::before{background:var(--orange);}
+.idxmeta{font-size:10px;color:var(--dim);font-family:var(--mono);}
+.idx-w{grid-column:span 2;}
+@keyframes rspin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:22px;right:22px;z-index:9999;padding:11px 18px 11px 14px;border-radius:9px;font-size:12px;font-weight:600;font-family:var(--body);transform:translateY(12px);opacity:0;transition:all .25s cubic-bezier(.16,1,.3,1);pointer-events:none;max-width:320px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.35);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{background:#0b2218;border:1px solid rgba(0,209,102,.3);color:#6fcf97;}
+.toast.err{background:#220b0b;border:1px solid rgba(255,71,87,.3);color:#ff8a96;}
+.toast.info{background:#0b1422;border:1px solid rgba(77,166,255,.3);color:#7ec8ff;}
+.toast.warn{background:#231a06;border:1px solid rgba(245,200,66,.3);color:var(--gld);}
+.footer{position:relative;z-index:10;text-align:center;margin-top:20px;font-size:10px;font-family:var(--mono);color:var(--dim);letter-spacing:.05em;line-height:2;}
+.footer code{color:var(--orange);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+@media(max-width:540px){.page{padding:22px 14px 0;}.card{padding:22px 18px 26px;}.hero h1{font-size:24px;}.idxgrid{grid-template-columns:1fr;}.idx-w{grid-column:span 1;}}
+</style>
+</head>
+<body>
+<div class="bg-layer"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+
+<div class="topbar">
+  <div class="tb-logo">
+    <div class="tb-icon">⚡</div>
+    <div class="tb-name">Options <span>Terminal</span></div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-ver">v3.4.0</div>
+    <div class="tb-badge badge-off" id="navBadge">● Offline</div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="hero">
+    <div class="hero-pill">Zerodha Kite API</div>
+    <h1>Connect &amp; <em>Login</em></h1>
+    <p>3-step setup to connect your Zerodha account and start trading Indian index options.</p>
+  </div>
+
+  <div class="stepbar">
+    <div class="snode active" id="nd1"><div class="scirc" id="sc1">1</div><div class="slbl">Keys</div></div>
+    <div class="sline" id="sl1"></div>
+    <div class="snode" id="nd2"><div class="scirc" id="sc2">2</div><div class="slbl">Login URL</div></div>
+    <div class="sline" id="sl2"></div>
+    <div class="snode" id="nd3"><div class="scirc" id="sc3">3</div><div class="slbl">Token</div></div>
+    <div class="sline" id="sl3"></div>
+    <div class="snode" id="nd4"><div class="scirc" id="sc4">4</div><div class="slbl">Launch</div></div>
+  </div>
+
+  <div class="card">
+
+    <!-- STEP 1 -->
+    <div class="panel active" id="p1">
+      <div class="step-badge" data-n="1">API Credentials</div>
+      <div class="ph">Enter API Key &amp; Secret</div>
+      <div class="ps">
+        Get these from <a href="https://developers.kite.trade/apps" target="_blank">developers.kite.trade/apps</a>
+        → open your app → copy <strong>API Key</strong> and <strong>API Secret</strong>.
+      </div>
+      <div class="box box-i">
+        <span class="box-ico">ℹ</span>
+        <div class="box-body">Credentials are saved only in your browser. The <strong>Access Token expires every midnight IST</strong> — you must log in again each morning.</div>
+      </div>
+      <div class="field">
+        <div class="flbl">API Key <span class="fhint">from Kite developer console</span></div>
+        <div class="fwrap">
+          <input class="finp" id="inpApiKey" type="text" placeholder="e.g. p04e63vptv9shd2m" autocomplete="off" spellcheck="false" oninput="onStep1Change()"/>
+          <button class="ficon" onclick="copyInp('inpApiKey')" title="Copy">⎘</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="flbl">API Secret <span class="fhint">stays in your browser only</span></div>
+        <div class="fwrap">
+          <input class="finp" id="inpApiSecret" type="password" placeholder="Your API secret key" autocomplete="off" oninput="onStep1Change()"/>
+          <button class="ficon" id="eyeBtn" onclick="toggleEye()">👁</button>
+        </div>
+      </div>
+      <button class="btn btn-or" id="btnStep1" onclick="doStep1()" disabled>Continue → Get Login URL</button>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="panel" id="p2">
+      <div class="step-badge" data-n="2">Login URL</div>
+      <div class="ph">Open Zerodha Login</div>
+      <div class="ps">
+        Click the button to open Zerodha login in a new tab. After you log in with your ID + 2FA,
+        Zerodha will redirect you back with a <strong>request_token</strong> in the URL.
+      </div>
+      <div class="flbl" style="margin-bottom:8px">Your Login URL</div>
+      <div class="urlbox" id="loginUrl" onclick="openKiteLogin()">
+        <span id="loginUrlTxt">—</span>
+        <button class="urlbox-copy" onclick="event.stopPropagation();copyText(document.getElementById('loginUrlTxt').textContent)">⎘</button>
+      </div>
+      <button class="btn btn-blue" onclick="openKiteLogin()" style="margin-bottom:20px">🔐 Open Zerodha Login</button>
+      <div class="box box-w">
+        <span class="box-ico">💡</span>
+        <div class="box-body">
+          After login + 2FA Zerodha redirects you to a URL like:<br>
+          <code>https://your-app.com/?request_token=<strong>AbCdXyZ123</strong>&status=success</code><br>
+          Copy everything after <code>request_token=</code> up to the <code>&</code>.
+          <br><br>
+          <strong>You can also paste the full redirect URL</strong> — the token will be extracted automatically.
+        </div>
+      </div>
+      <div class="field">
+        <div class="flbl">Paste request_token <span class="fhint">from the redirect URL (or paste full URL)</span></div>
+        <div class="fwrap">
+          <input class="finp nopad" id="inpRequestToken" type="text" placeholder="AbCdXyZ123  or  paste full redirect URL" autocomplete="off" spellcheck="false" oninput="onReqTokChange()"/>
+        </div>
+      </div>
+      <div id="step2ErrBox"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost btn-back" onclick="goStep(1)">← Back</button>
+        <button class="btn btn-or" id="btnStep2" onclick="doStep2()" disabled>Generate Access Token →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="panel" id="p3">
+      <div class="step-badge" data-n="3">Access Token</div>
+      <div class="ph">Token Ready ✓</div>
+      <div class="ps">
+        Your access token has been loaded into the running server automatically.
+        No <code>.env</code> file needed — just repeat this login each morning.
+      </div>
+      <div id="tokenResultBox"></div>
+      <div id="tokenSummary" style="margin-bottom:16px"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost btn-back" onclick="goStep(2)">← Back</button>
+        <button class="btn btn-or" onclick="goStep(4)">Continue → Select Index</button>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="panel" id="p4">
+      <div class="step-badge" data-n="4">Launch</div>
+      <div class="ph">Select Index &amp; Launch</div>
+      <div class="ps">Choose the index you want to trade. Make sure your backend server is running.</div>
+      <div class="bkbar chk" id="bkBar">
+        <div class="bkdot"></div>
+        <div class="bktxt" id="bkTxt">Checking backend at <b>127.0.0.1:8000</b>…</div>
+        <button class="bkbtn" id="bkBtn" onclick="checkBackend()" title="Refresh">↻</button>
+      </div>
+      <div class="flbl" style="margin-bottom:10px">Select Index to Trade</div>
+      <div class="idxgrid">
+        <div class="idxcard on" id="ix-nifty50" onclick="selIdx('nifty50',this)">
+          <div class="idxname">NIFTY 50</div>
+          <div class="idxmeta">Lot 65 · Step ₹50 · NFO</div>
+        </div>
+        <div class="idxcard" id="ix-banknifty" onclick="selIdx('banknifty',this)">
+          <div class="idxname">BANK NIFTY</div>
+          <div class="idxmeta">Lot 30 · Step ₹100 · NFO</div>
+        </div>
+        <div class="idxcard" id="ix-finnifty" onclick="selIdx('finnifty',this)">
+          <div class="idxname">FIN NIFTY</div>
+          <div class="idxmeta">Lot 60 · Step ₹50 · NFO</div>
+        </div>
+        <div class="idxcard" id="ix-sensex" onclick="selIdx('sensex',this)">
+          <div class="idxname">SENSEX</div>
+          <div class="idxmeta">Lot 20 · Step ₹100 · BFO</div>
+        </div>
+        <div class="idxcard idx-w" id="ix-midcpnifty" onclick="selIdx('midcpnifty',this)">
+          <div class="idxname">MIDCAP NIFTY</div>
+          <div class="idxmeta">Lot 120 · Step ₹25 · NFO</div>
+        </div>
+      </div>
+      <button class="btn btn-grn" onclick="launch()">⚡ Launch Terminal</button>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(3)" style="flex:1">← Back</button>
+        <button class="btn btn-ghost red" onclick="clearAll()" style="flex:1">🗑 Clear Saved</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Options Terminal · Zerodha Kite API · 4-Leg Calendar Spread<br>
+    Backend: <code>uvicorn server:app --host 127.0.0.1 --port 8000</code>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+const BACKEND = 'http://127.0.0.1:8000';
+const SK = { KEY:'ot_api_key', SECRET:'ot_api_secret', TOKEN:'ot_access_token', IDX:'ot_selected_index' };
+let selectedIdx = 'nifty50';
+let generatedToken = '';
+
+window.addEventListener('DOMContentLoaded', () => {
+  const savedKey    = ls(SK.KEY)    || '';
+  const savedSecret = ls(SK.SECRET) || '';
+  const savedToken  = ls(SK.TOKEN)  || '';
+  const savedIdx    = ls(SK.IDX)    || 'nifty50';
+
+  if (savedKey)    { el('inpApiKey').value    = savedKey;    el('inpApiKey').classList.add('ok'); }
+  if (savedSecret) { el('inpApiSecret').value = savedSecret; el('inpApiSecret').classList.add('ok'); }
+
+  selectedIdx = savedIdx;
+  highlightIdx(savedIdx);
+  onStep1Change();
+
+  if (savedKey && savedToken) {
+    generatedToken = savedToken;
+    fillEnvPreview(savedKey, savedToken);
+    el('tokenResultBox').innerHTML = `
+      <div class="box box-s" style="margin-bottom:16px">
+        <span class="box-ico">✅</span>
+        <div class="box-body"><strong>Token restored from previous session.</strong> Valid until midnight IST. Generate a fresh token each morning.</div>
+      </div>`;
+    goStep(4);
+    return;
+  }
+
+  if (savedKey && savedSecret) {
+    buildLoginUrl(savedKey);
+    goStep(2);
+    return;
+  }
+
+  goStep(1);
+  checkBackend(true);
+});
+
+function goStep(n) {
+  [1,2,3,4].forEach(i => {
+    const nd = el('nd'+i), sc = el('sc'+i);
+    nd.className   = 'snode' + (i<n?' done':i===n?' active':'');
+    sc.textContent = i<n ? '✓' : String(i);
+    el('p'+i).className = 'panel' + (i===n?' active':'');
+    if (i<4) el('sl'+i).className = 'sline' + (i<n?' done':'');
+  });
+  if (n !== 2) { const e = el('step2ErrBox'); if(e) e.innerHTML=''; }
+  if (n === 4) checkBackend(true);
+}
+
+function onStep1Change() {
+  const k=el('inpApiKey').value.trim(), s=el('inpApiSecret').value.trim();
+  el('btnStep1').disabled = !(k&&s);
+  if(k) el('inpApiKey').classList.add('ok'); else el('inpApiKey').classList.remove('ok');
+  if(s) el('inpApiSecret').classList.add('ok'); else el('inpApiSecret').classList.remove('ok');
+}
+
+function toggleEye() {
+  const inp=el('inpApiSecret'), isPass=inp.type==='password';
+  inp.type=isPass?'text':'password';
+  el('eyeBtn').textContent=isPass?'🙈':'👁';
+}
+
+function doStep1() {
+  const key=el('inpApiKey').value.trim(), sec=el('inpApiSecret').value.trim();
+  if(!key){toast('Enter your API Key','err');return;}
+  if(!sec){toast('Enter your API Secret','err');return;}
+  ls_set(SK.KEY,key); ls_set(SK.SECRET,sec);
+  buildLoginUrl(key);
+  goStep(2);
+  toast('Keys saved — open Zerodha login below','ok');
+}
+
+function buildLoginUrl(apiKey) {
+  const url=`https://kite.zerodha.com/connect/login?v=3&api_key=${apiKey}`;
+  el('loginUrlTxt').textContent=url;
+}
+
+function openKiteLogin() {
+  const url=el('loginUrlTxt').textContent;
+  if(!url||url==='—'){toast('Go back and enter your API Key first','err');return;}
+  window.open(url,'_blank');
+  toast('Zerodha login opened in new tab','info');
+}
+
+function onReqTokChange() {
+  const v=el('inpRequestToken').value.trim();
+  el('btnStep2').disabled = v.length<6;
+  if(v.length>=6) el('inpRequestToken').classList.add('ok');
+  else el('inpRequestToken').classList.remove('ok');
+}
+
+async function doStep2() {
+  const key    = ls(SK.KEY)    || '';
+  const secret = ls(SK.SECRET) || '';
+  let   reqTok = el('inpRequestToken').value.trim();
+
+  const prevErr = el('step2ErrBox');
+  if(prevErr) prevErr.innerHTML='';
+
+  // Auto-extract token if user pasted full redirect URL
+  if(reqTok.includes('request_token=')) {
+    try {
+      const parsed = new URL(reqTok.startsWith('http') ? reqTok : 'https://x.com/?'+reqTok.split('?')[1]);
+      reqTok = parsed.searchParams.get('request_token') || reqTok;
+    } catch(e) {
+      const m = reqTok.match(/request_token=([^&]+)/);
+      if(m) reqTok = m[1];
+    }
+    el('inpRequestToken').value = reqTok;
+  }
+
+  if(!key||!secret){toast('API Key/Secret missing — go back to Step 1','err');return;}
+  if(!reqTok){toast('Paste the request_token from the redirect URL','err');return;}
+
+  const btn=el('btnStep2');
+  btn.disabled=true;
+  btn.innerHTML='⏳ Generating Token…';
+
+  try {
+    const res = await fetch(`${BACKEND}/generate-token`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ api_key:key, api_secret:secret, request_token:reqTok }),
+      signal: AbortSignal.timeout(15000),
+    });
+    const d = await res.json();
+
+    if(d.status==='success' && d.access_token) {
+      generatedToken = d.access_token;
+      ls_set(SK.TOKEN, generatedToken);
+      fillEnvPreview(key, generatedToken);
+      el('tokenResultBox').innerHTML = `
+        <div class="box box-s" style="margin-bottom:16px">
+          <span class="box-ico">✅</span>
+          <div class="box-body">
+            <strong>Token generated successfully!</strong>${d.user_name?' Welcome, '+d.user_name+'.':''}
+            <br>Valid until midnight IST. Saved to browser.
+          </div>
+        </div>`;
+      el('inpRequestToken').value='';
+      el('inpRequestToken').classList.remove('ok');
+      el('btnStep2').disabled=true;
+      _pushTokenToBackend(key, generatedToken);
+      goStep(3);
+      toast('Access token ready!','ok');
+    } else {
+      showStep2Error(d.error || 'No access_token in response');
+    }
+  } catch(e) {
+    if(e.name==='TimeoutError'||e.name==='AbortError'||(e.message&&e.message.includes('fetch'))) {
+      showStep2Error('Backend is offline or not running.<br>Start it with: <code>uvicorn server:app --host 127.0.0.1 --port 8000</code>');
+    } else {
+      showStep2Error('Error: '+(e.message||'Unknown error'));
+    }
+  } finally {
+    btn.disabled=false;
+    btn.innerHTML='Generate Access Token →';
+    onReqTokChange();
+  }
+}
+
+function showStep2Error(msg) {
+  let errBox=el('step2ErrBox');
+  if(!errBox){errBox=document.createElement('div');errBox.id='step2ErrBox';el('p2').appendChild(errBox);}
+  errBox.innerHTML=`<div class="box box-e" style="margin-top:14px;margin-bottom:0"><span class="box-ico">❌</span><div class="box-body">${msg}</div></div>`;
+  toast('Token generation failed','err');
+}
+
+function fillEnvPreview(key, token) {
+  // Show masked token summary — no .env needed
+  const masked = token ? token.slice(0,8) + '...' + token.slice(-4) : '—';
+  const summary = el('tokenSummary');
+  if (summary) {
+    summary.innerHTML = `
+      <div style="background:var(--bg3);border:1.5px solid var(--bdr);border-radius:9px;
+                  padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:2.2;">
+        <div>
+          <span style="color:var(--dim)">API_KEY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=</span>
+          <span style="color:var(--blue);margin-left:6px">${key ? key.slice(0,6)+'...'+key.slice(-4) : '—'}</span>
+        </div>
+        <div>
+          <span style="color:var(--dim)">ACCESS_TOKEN =</span>
+          <span style="color:var(--grn);margin-left:6px">${masked}</span>
+          <span style="color:var(--grn);font-size:10px;margin-left:8px">✓ loaded into server</span>
+        </div>
+        <div style="margin-top:6px;font-size:10px;color:var(--dim);font-family:var(--body)">
+          ⏱ Valid until midnight IST &nbsp;·&nbsp; Repeat login each morning
+        </div>
+      </div>`;
+  }
+}
+
+
+
+
+
+async function checkBackend(silent=false) {
+  const bar=el('bkBar'),txt=el('bkTxt'),btn=el('bkBtn'),badge=el('navBadge');
+  bar.className='bkbar chk';
+  txt.innerHTML='Checking backend at <b>127.0.0.1:8000</b>…';
+  btn.classList.add('spin');
+  badge.className='tb-badge badge-spin';badge.textContent='● Checking';
+  try {
+    const r=await fetch(`${BACKEND}/health`,{signal:AbortSignal.timeout(5000)});
+    const d=await r.json();
+    const mode=d.paper_mode?'📋 PAPER':'⚡ LIVE';
+    const mkt=d.market_open?'🟢 OPEN':'🔴 CLOSED';
+    bar.className='bkbar ok';
+    txt.innerHTML=`Backend <b style="color:var(--grn)">online</b> · v${d.version||'?'} · ${mode} · ${mkt}`;
+    badge.className='tb-badge badge-ok';
+    badge.textContent=d.paper_mode?'● Paper':'● Live';
+    if(!silent) toast('Backend is online','ok');
+  } catch(e) {
+    bar.className='bkbar off';
+    txt.innerHTML=`Backend <b style="color:var(--red)">offline</b> &nbsp;·&nbsp; Run: <code>uvicorn server:app --port 8000</code>`;
+    badge.className='tb-badge badge-off';badge.textContent='● Offline';
+    if(!silent) toast('Backend is offline','warn');
+  } finally {
+    btn.classList.remove('spin');
+  }
+}
+
+function selIdx(slug,cardEl) {
+  selectedIdx=slug;
+  ls_set(SK.IDX,slug);
+  highlightIdx(slug);
+}
+
+function highlightIdx(slug) {
+  document.querySelectorAll('.idxcard').forEach(c=>c.classList.remove('on'));
+  const c=el('ix-'+slug);if(c)c.classList.add('on');
+}
+
+function launch() {
+  const token=ls(SK.TOKEN);
+  if(!token){toast('No access token — complete all steps first','err');return;}
+  toast('Launching…','ok');
+  // ── FIXED: route directly to terminal.html with index slug ──
+  setTimeout(()=>{ window.location.href=`terminal.html?index=${selectedIdx}`; },400);
+}
+
+function clearAll() {
+  if(!confirm('Clear all saved credentials?\nYou will need to log in again.')) return;
+  Object.values(SK).forEach(k=>localStorage.removeItem(k));
+  generatedToken='';
+  ['inpApiKey','inpApiSecret','inpRequestToken'].forEach(id=>{
+    const e=el(id);if(e){e.value='';e.classList.remove('ok','err');}
+  });
+  onStep1Change();
+  goStep(1);
+  toast('Cleared — please log in again','info');
+}
+
+async function _pushTokenToBackend(apiKey,token) {
+  if(!apiKey||!token) return;
+  try {
+    await fetch(`${BACKEND}/update-token`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({api_key:apiKey,access_token:token}),
+      signal:AbortSignal.timeout(5000),
+    });
+  } catch(e){ console.info('[login] /update-token unreachable — update .env manually'); }
+}
+
+function el(id){return document.getElementById(id);}
+function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function ls_set(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function copyInp(id){const v=el(id)?.value||'';if(!v)return;navigator.clipboard.writeText(v).then(()=>toast('Copied!','ok')).catch(()=>{});}
+function copyText(txt){if(!txt)return;navigator.clipboard.writeText(txt).then(()=>toast('Copied!','ok')).catch(()=>{});}
+let _tt;
+function toast(msg,type='info'){
+  const t=el('toastEl');
+  const icons={ok:'✓',err:'✗',info:'ℹ',warn:'⚠'};
+  t.innerHTML=`<span>${icons[type]||'ℹ'}</span> ${msg}`;
+  t.className=`toast show ${type}`;
+  clearTimeout(_tt);_tt=setTimeout(()=>{t.className='toast';},3800);
+}
+</script>
+</body>
+</html>

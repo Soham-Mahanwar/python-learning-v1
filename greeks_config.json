@@ -1,0 +1,98 @@
+{
+  "version": "v5",
+  "last_updated": "2026-03-09",
+  "_comment_sel": "Leg-selection parameters used by Auto-Fill (Step 3). ce_delta/pe_delta = target delta for near-expiry leg picks. vega_tol = fractional tolerance for next-expiry vega matching (0.3 = 30% of target vega, min window \u00b12).",
+  "sel": {
+    "ce_delta": 0.3,
+    "pe_delta": -0.3,
+    "vega_tol": 0.3
+  },
+  "_comment_pre": "Pre-trade check ranges. Trade is flagged if combined Greeks fall outside these bounds.",
+  "pre": {
+    "delta_min": -0.07,
+    "delta_max": 0.07,
+    "theta_min": 5,
+    "theta_max": 500,
+    "vega_min": -7,
+    "vega_max": 7,
+    "gamma_min": -0.004,
+    "gamma_max": 0.004
+  },
+  "_comment_mon": "Live-monitoring alert ranges. Alert fires when combined Greeks breach these bounds.",
+  "mon": {
+    "delta_min": -0.1,
+    "delta_max": 0.1,
+    "theta_min": 3,
+    "theta_max": 5000,
+    "vega_min": -10,
+    "vega_max": 10,
+    "gamma_min": -0.005,
+    "gamma_max": 0.005
+  },
+  "pnl": {
+    "profit_pct": 1.0,
+    "loss_pct": 2.0
+  },
+  "indices": {
+    "nifty50": {
+      "label": "NIFTY 50",
+      "idx": "NIFTY",
+      "lot": 65,
+      "step": 50
+    },
+    "banknifty": {
+      "label": "NIFTY BANK",
+      "idx": "BANKNIFTY",
+      "lot": 30,
+      "step": 100
+    },
+    "sensex": {
+      "label": "SENSEX",
+      "idx": "SENSEX",
+      "lot": 20,
+      "step": 100
+    },
+    "finnifty": {
+      "label": "NIFTY FIN SERVICE",
+      "idx": "FINNIFTY",
+      "lot": 60,
+      "step": 50
+    },
+    "midcpnifty": {
+      "label": "NIFTY MIDCAP 50",
+      "idx": "MIDCPNIFTY",
+      "lot": 120,
+      "step": 25
+    }
+  },
+  "alerts": {
+    "pre_trade": {
+      "delta": "Selected trade is NOT as per expected delta range, please check for other strikes and expiry combinations",
+      "theta": "Selected trade is NOT as per expected theta range, please check for other strikes and expiry combinations",
+      "vega": "Selected trade is NOT as per expected vega range, please check for other strikes and expiry combinations",
+      "gamma": "Selected trade is NOT as per expected gamma range, please check for other strikes and expiry combinations"
+    },
+    "monitoring": {
+      "delta": "Allowed Delta monitoring range is reached, proceed for adjustment or exit trade",
+      "theta": "Allowed Theta monitoring range is reached, proceed for adjustment or exit trade",
+      "vega": "Allowed Vega monitoring range is reached, proceed for adjustment or exit trade",
+      "gamma": "Allowed Gamma monitoring range is reached, proceed for adjustment or exit trade"
+    }
+  },
+  "whatsapp": {
+    "enabled": false,
+    "phone": "",
+    "twilio_sid": "",
+    "twilio_token": "",
+    "from_number": "whatsapp:+14155238886",
+    "triggers": {
+      "delta_breach": true,
+      "theta_breach": true,
+      "vega_breach": true,
+      "gamma_breach": true,
+      "profit_target": true,
+      "max_loss": true,
+      "trade_exited": true
+    }
+  }
+}
