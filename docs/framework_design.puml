@@ -1,0 +1,65 @@
+@startuml
+skinparam rectangle {
+  BackgroundColor<<Browser>> #bbdefb
+  BackgroundColor<<Backend>> #c8e6c9
+  BackgroundColor<<Core>> #ffe082
+  BackgroundColor<<Paper>> #f8bbd0
+  BackgroundColor<<External>> #e1bee7
+  BorderColor #333333
+}
+
+package "Browser / Web Client" <<Browser>> {
+  rectangle "login.html" as Login
+  rectangle "index.html" as Index
+  rectangle "terminal.html" as Terminal
+  rectangle "localStorage token/index" as LocalStorage
+}
+
+package "FastAPI Backend" <<Backend>> {
+  rectangle "api_server.py" as API
+  rectangle "greeks_config.json" as ConfigFile
+}
+
+package "Core Trading Logic" <<Core>> {
+  rectangle "core_trading.py" as CoreTrading
+  rectangle "Black-Scholes Greeks" as Greeks
+  rectangle "Instrument Cache" as InstrumentCache
+  rectangle "NL trade parser" as NLParser
+}
+
+package "Paper Trading Simulation" <<Paper>> {
+  rectangle "paper_trading.py" as PaperTrading
+  rectangle "paper_margin.py" as PaperMargin
+  rectangle "Virtual orders & balance" as VirtualState
+}
+
+package "External Services" <<External>> {
+  rectangle "KiteConnect / Zerodha" as Kite
+  rectangle "Twilio WhatsApp" as Twilio
+}
+
+Login --> API : "POST /generate-token\nPUT /update-token"
+Index --> API : "GET /health"
+Terminal --> API : "GET /greeks, /quote, /positions,\n/orders, /holdings, /margins,\n/index/{index}/levels"
+Terminal --> API : "POST /place-legs,\n/exit-legs, /check-margin,\n/calculate-payoff, /send-whatsapp"
+Terminal --> API : "GET/POST /paper/*"
+Terminal --> API : "GET /config\nPOST /config"
+
+API --> CoreTrading : calls trading logic
+API --> PaperTrading : calls paper trading logic
+API --> PaperMargin : calls paper margin estimate
+API --> ConfigFile : reads/writes config
+
+CoreTrading --> Kite : uses Zerodha API
+CoreTrading --> Greeks : computes Greeks
+CoreTrading --> InstrumentCache : caches instruments
+CoreTrading --> NLParser : parses natural language orders
+
+PaperTrading --> VirtualState : simulates orders/balance
+PaperTrading --> ConfigFile : loads config
+PaperMargin --> VirtualState : estimates paper margin
+
+API --> Twilio : "POST /send-whatsapp"
+Terminal --> LocalStorage : stores token/index
+
+@enduml
